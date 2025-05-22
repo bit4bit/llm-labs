@@ -1,0 +1,109 @@
+require 'llmed'
+require 'logger'
+
+describe LLMed do
+  context "ruby application" do
+    it "compile application" do
+      tempfile = %x{mktemp}.chomp
+      logger = Logger.new(STDOUT)
+      llmed = LLMed.new(logger: logger)
+      llmed.application "demo", language: 'ruby', output_file: tempfile do
+        context "main" do
+          llm <<-LLM
+        Codigo que imprima 'hola mundo'.
+        LLM
+        end
+      end
+
+      llmed.compile(output_dir: '/tmp')
+      
+      expect(File.read tempfile).to including("puts 'hola mundo'")
+    end
+
+    it "compile application from string" do
+      tempfile = %x{mktemp}.chomp
+      logger = Logger.new(STDOUT)
+      llmed = LLMed.new(logger: logger)
+      llmed.eval_source <<-SOURCE
+    application "demo", language: 'ruby', output_file: '#{tempfile}' do
+      context "main" do
+        llm <<-LLM
+        Codigo ruby que imprima 'hola mundo'.
+        LLM
+      end
+    end
+    SOURCE
+
+      llmed.compile(output_dir: '/tmp')
+      
+      expect(File.read tempfile).to including("puts 'hola mundo'")
+    end
+  end
+
+  context "python application" do
+    it "compile application" do
+      tempfile = %x{mktemp}.chomp
+      logger = Logger.new(STDOUT)
+      llmed = LLMed.new(logger: logger)
+      llmed.application "demo", language: 'python', output_file: tempfile do
+        context "main" do
+          llm <<-LLM
+        Codigo que imprima 'hola mundo'.
+        LLM
+        end
+      end
+
+      llmed.compile(output_dir: '/tmp')
+      
+      expect(File.read tempfile).to including("print('hola mundo')")
+    end
+
+    it "compile application from string" do
+      tempfile = %x{mktemp}.chomp
+      logger = Logger.new(STDOUT)
+      llmed = LLMed.new(logger: logger)
+      llmed.eval_source <<-SOURCE
+    application "demo", language: 'python', output_file: '#{tempfile}' do
+      context "main" do
+        llm <<-LLM
+        Codigo python que imprima 'hola mundo'.
+        LLM
+      end
+    end
+    SOURCE
+
+      llmed.compile(output_dir: '/tmp')
+      
+      expect(File.read tempfile).to including("print('hola mundo')")
+    end
+  end
+
+  context "multiple applications" do
+    it "ruby and python" do
+      tempfile_ruby = %x{mktemp}.chomp
+      tempfile_python = %x{mktemp}.chomp
+      logger = Logger.new(STDOUT)
+      llmed = LLMed.new(logger: logger)
+      llmed.application "demo", language: 'ruby', output_file: tempfile_ruby do
+        context "main" do
+          llm <<-LLM
+        Codigo que imprima 'hola mundo'.
+        LLM
+        end
+      end
+
+      llmed.application "demo python", language: 'python', output_file: tempfile_python do
+        context "main" do
+          llm <<-LLM
+        Codigo que imprima 'hola mundo'.
+        LLM
+        end
+      end
+
+      llmed.compile(output_dir: '/tmp')
+      
+      expect(File.read tempfile_ruby).to including("puts 'hola mundo'")
+      expect(File.read tempfile_python).to including("print('hola mundo')")
+    end
+  end
+end

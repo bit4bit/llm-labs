@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# gem "rails"
+
+gem "langchainrb", "~> 0.19.5"
+
+gem "rspec", "~> 3.13"
+
+gem "ruby-openai", "~> 8.1"

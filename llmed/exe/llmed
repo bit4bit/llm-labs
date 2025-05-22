@@ -1,0 +1,8 @@
+#!/bin/env ruby
+require 'llmed'
+
+logger = Logger.new(STDOUT)
+source_path = ARGF.read
+llmed = LLMed.new(logger: logger)
+llmed.eval_source source_path
+llmed.compile(output_dir: "./llmed-out")
