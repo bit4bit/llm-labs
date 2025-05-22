@@ -32,4 +32,4 @@ end
 
 # Usage
 
-`rake llmed[examples/tictactoe.rb]`
+`OPENAI_API_KEY=xxx rake llmed[examples/tictactoe.rb]`
