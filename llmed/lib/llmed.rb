@@ -140,9 +140,9 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
   end
 
   def compile(output_dir:)
-    llm = @configuration.llm()
-
     @applications.each do |app|
+      llm = @configuration.llm()
+
       messages = [
         {role: "system", content: @configuration.prompt(language: app.language)},
       ]
@@ -161,7 +161,7 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
   private
   def source_code(content)
     # TODO: by provider?
-    content.gsub('```', '').gsub(/^(ruby|python|elixir|c)/, '')
+    content.gsub('```', '').sub(/^(ruby|python(\d*)|elixir|c(pp)?)/, '')
   end
 
   def write_output(app, output_dir, output)
