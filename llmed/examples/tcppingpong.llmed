@@ -44,10 +44,4 @@ application "TCP Pong", language: :python, output_file: "tcppong.cllmed" do
     Show to the user a example using telnet linux command.
     LLM
   end
-
-  context "syntax issues" do
-    <<-LLM
-    Create a correct ruby class.
-    LLM
-  end
 end
