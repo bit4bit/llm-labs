@@ -23,6 +23,16 @@ class LLMed
     def message?
       not (@message.nil? || @message.empty?)
     end
+
+
+    def from_file(path)
+      File.read(path)
+    end
+
+    def from_source_code(path)
+      code = File.read(path)
+      "Dado el codigo fuente: #{code}\n\n\n"
+    end
   end
 
   class Configuration
@@ -79,12 +89,13 @@ Siempre adicionas el comentario de codigo:
   class Application
     attr_reader :contexts, :name, :language
 
-    def initialize(name:, language:, output_file:)
+    def initialize(name:, language:, output_file:, block:)
       raise "required language" if language.nil?
 
       @name = name
       @output_file = output_file
       @language = language
+      @block = block
       @contexts = []
     end
 
@@ -96,6 +107,10 @@ Siempre adicionas el comentario de codigo:
       end
 
       @contexts << ctx
+    end
+
+    def evaluate
+      self.instance_eval(&@block)
     end
 
     def output_file(output_dir)
@@ -121,8 +136,7 @@ Siempre adicionas el comentario de codigo:
   def_delegator :@configuration, :set_prompt, :set_prompt
 
   def application(name, language: nil, output_file:, &block)
-    @app = Application.new(name: name, language: @configuration.language(language), output_file: output_file)
-    @app.instance_eval(&block)
+    @app = Application.new(name: name, language: @configuration.language(language), output_file: output_file, block: block)
     @applications << @app
   end
 
@@ -133,7 +147,7 @@ Siempre adicionas el comentario de codigo:
       messages = [
         {role: "system", content: @configuration.prompt(language: app.language)},
       ]
-
+      app.evaluate
       app.contexts.each do |ctx|
         messages << {role: "user", content: ctx.message}
       end
