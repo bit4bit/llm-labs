@@ -82,17 +82,12 @@ class LLMed
       response = llm_response.chat_completion
       @logger.info("APPLICATION #{app.name} TOTAL TOKENS #{llm_response.total_tokens}")
       write_output(app, output_dir, source_code(response))
-      check_syntax(app, output_dir, source_language(response))
     end
   end
 
   private
-  def source_language(content)
-    content.gsub('```', '')[/^(.+)\n/]
-  end
-
   def source_code(content)
-    content.gsub('```', '').gsub(/^(ruby|python)/, '')
+    content.gsub('```', '').gsub(/^(ruby|python|elixir|c)/, '')
   end
 
   def write_output(app, output_dir, output)
@@ -102,26 +97,5 @@ class LLMed
     File.write(output_file, output)
 
     @logger.info("APPLICATION #{app.name} OUTPUT FILE #{output_file}")
-  end
-
-  def check_syntax(app, output_dir, language)
-    source_file = app.output_file(output_dir)
-
-    case language
-    when 'ruby'
-      system("ruby -c #{source_file} > /dev/null")
-      unless $?.success?
-        raise "invalid generated ruby file #{output_file}"
-      else
-        @logger.info("SYNTAX OK")
-      end
-    when 'python'
-      system("python3 -m py_compile #{source_file}")
-      unless $?.success?
-        raise "invalid generated Python file #{output_file}"
-      else
-        @logger.info("SYNTAX OK")
-      end
-    end
   end
 end
