@@ -2,10 +2,13 @@ require 'pp'
 require 'langchain'
 require 'pathname'
 require 'fileutils'
+require 'forwardable'
 
 Langchain.logger.level = Logger::ERROR
 
 class LLMed
+  extend Forwardable
+
   class Context
     attr_reader :message, :name
 
@@ -24,6 +27,18 @@ class LLMed
 
   class Configuration
     def initialize
+      @prompt = Langchain::Prompt::PromptTemplate.new(template: "
+Eres desarrollador de software y solo conoces del lenguage de programacion {language}.
+La respuesta no debe contener texto adicional al codigo fuente generado. Siempre adicionas el comentario '@LLM-ASSISTED' 
+", input_variables: ["language"])
+    end
+
+    def prompt(language:)
+      @prompt.format(language: language)
+    end
+
+    def set_prompt(prompt)
+      @prompt = Langchain::Prompt::PromptTemplate.new(template: prompt, input_variables: ["language"])
     end
 
     def set_language(language)
@@ -60,7 +75,6 @@ class LLMed
   class Application
     attr_reader :contexts, :name, :language
 
-    # TODO: add provider and model
     def initialize(name:, language:, output_file:)
       raise "required language" if language.nil?
 
@@ -95,15 +109,12 @@ class LLMed
     self.instance_eval(code)
   end
 
-  # default language for all the aplications
-  def set_language(lang)
-    @configuration.set_language(lang)
-  end
-
-  # default llm for all the applications
-  def set_llm(**args)
-    @configuration.set_llm(**args)
-  end
+  # changes default language
+  def_delegator :@configuration, :set_language, :set_language
+  # changes default llm
+  def_delegator :@configuration, :set_llm, :set_llm
+  # changes default prompt
+  def_delegator :@configuration, :set_prompt, :set_prompt
 
   def application(name, language: nil, output_file:, &block)
     @app = Application.new(name: name, language: @configuration.language(language), output_file: output_file)
@@ -116,7 +127,7 @@ class LLMed
 
     @applications.each do |app|
       messages = [
-        {role: "system", content: "Eres desarrollador de software y solo conoces del lenguage de programacion #{app.language}. La respuesta no debe contener texto adicional al codigo fuente generado. Siempre adicionas el comentario '@LLM-ASSISTED' "},
+        {role: "system", content: @configuration.prompt(language: app.language)},
       ]
 
       app.contexts.each do |ctx|
@@ -132,6 +143,7 @@ class LLMed
 
   private
   def source_code(content)
+    # TODO: by provider?
     content.gsub('```', '').gsub(/^(ruby|python|elixir|c)/, '')
   end
 
