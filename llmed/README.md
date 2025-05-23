@@ -2,25 +2,18 @@
 
 Single LLM Code editor.
 
-Premises:
-* Messages -> Source Code
-* Output LLM -> Application
-
-So we need a better way to express the intention of the program.
+Concepts:
+* Source Code = This (there is not name yet)
+* Application = Legacy Source Code
+* Compiler = LLM
 
 ```ruby
-application "hola mundo ruby", language: 'ruby', output_file: "holamundo-output.rb" do
-  context "main" do
-    <<-LLM
-        Codigo ruby que imprima 'hola mundo'.
-    LLM
-  end
-end
+set_llm provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o'
 
-application "hola mundo python", language: 'python', output_file: "holamundo-output.py" do
+application "hi world", language: '<HERE LANGUAGE>', output_file: "<HERE NAME>.rb" do
   context "main" do
     <<-LLM
-        Codigo python que imprima 'hola mundo'.
+        Application do print 'hi world!'.
     LLM
   end
 end
@@ -30,6 +23,6 @@ end
 
 * `bundle3.1 install --path vendor/`
 
-# Usage
+# Usage Development
 
 `OPENAI_API_KEY=xxx rake llmed[examples/tictactoe.rb]`
