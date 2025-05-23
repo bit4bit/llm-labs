@@ -22,11 +22,48 @@ class LLMed
     end
   end
 
+  class Configuration
+    def initialize
+    end
+
+    def set_language(language)
+      @language = language
+    end
+
+    def set_llm(provider:, api_key:, model:)
+      @provider = provider
+      @provider_api_key = api_key
+      @provider_model = model
+    end
+
+    def language(main)
+      lang = main || @language
+      raise "Please assign a language to the application or general with the function set_languag" if lang.nil?
+      lang
+    end
+
+    def llm()
+      case @provider
+      when :openai
+        Langchain::LLM::OpenAI.new(
+          api_key: @provider_api_key,
+          default_options: { temperature: 0.7, chat_model: @provider_model}
+        )
+      when nil
+        raise "Please set the provider with `set_llm(provider, api_key, model)`"
+      else
+        raise "not implemented provider #{@provider}"
+      end
+    end
+  end
+
   class Application
     attr_reader :contexts, :name, :language
 
     # TODO: add provider and model
     def initialize(name:, language:, output_file:)
+      raise "required language" if language.nil?
+
       @name = name
       @output_file = output_file
       @language = language
@@ -51,23 +88,31 @@ class LLMed
   def initialize(logger:)
     @logger = logger
     @applications = []
+    @configuration = Configuration.new()
   end
 
   def eval_source(code)
     self.instance_eval(code)
   end
 
-  def application(name, language:, output_file:, &block)
-    @app = Application.new(name: name, language: language, output_file: output_file)
+  # default language for all the aplications
+  def set_language(lang)
+    @configuration.set_language(lang)
+  end
+
+  # default llm for all the applications
+  def set_llm(**args)
+    @configuration.set_llm(**args)
+  end
+
+  def application(name, language: nil, output_file:, &block)
+    @app = Application.new(name: name, language: @configuration.language(language), output_file: output_file)
     @app.instance_eval(&block)
     @applications << @app
   end
 
   def compile(output_dir:)
-    llm = Langchain::LLM::OpenAI.new(
-      api_key: ENV["OPENAI_API_KEY"],
-      default_options: { temperature: 0.7, chat_model: "gpt-4o" }
-    )
+    llm = @configuration.llm()
 
     @applications.each do |app|
       messages = [

@@ -1,3 +1,4 @@
+set_llm provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o'
 application "tic tac toe", language: 'c', output_file: "ticktactoe.c" do
   context "main" do
     <<-LLM

@@ -2,11 +2,39 @@ require 'llmed'
 require 'logger'
 
 describe LLMed do
+  it "configuration" do
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    
+    llmed.set_language 'ruby'
+    llmed.set_llm provider: :openai, api_key: 'key', model: 'model'
+  end
+
   context "ruby application" do
-    it "compile application" do
+    it "compile application with implicit language" do
       tempfile = %x{mktemp}.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
+      llmed.set_llm(provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o')
+      llmed.set_language 'ruby'
+      llmed.application "demo", output_file: tempfile do
+        context "main" do
+          llm <<-LLM
+        Codigo que imprima 'hola mundo'.
+        LLM
+        end
+      end
+
+      llmed.compile(output_dir: '/tmp')
+      
+      expect(File.read tempfile).to including("puts 'hola mundo'")
+    end
+
+    it "compile application with explicit language" do
+      tempfile = %x{mktemp}.chomp
+      logger = Logger.new(STDOUT)
+      llmed = LLMed.new(logger: logger)
+      llmed.set_llm(provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o')
       llmed.application "demo", language: 'ruby', output_file: tempfile do
         context "main" do
           llm <<-LLM
@@ -24,6 +52,7 @@ describe LLMed do
       tempfile = %x{mktemp}.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
+      llmed.set_llm(provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o')
       llmed.eval_source <<-SOURCE
     application "demo", language: 'ruby', output_file: '#{tempfile}' do
       context "main" do
@@ -45,6 +74,7 @@ describe LLMed do
       tempfile = %x{mktemp}.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
+      llmed.set_llm(provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o')
       llmed.application "demo", language: 'python', output_file: tempfile do
         context "main" do
           llm <<-LLM
@@ -62,6 +92,7 @@ describe LLMed do
       tempfile = %x{mktemp}.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
+      llmed.set_llm(provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o')
       llmed.eval_source <<-SOURCE
     application "demo", language: 'python', output_file: '#{tempfile}' do
       context "main" do
@@ -84,6 +115,7 @@ describe LLMed do
       tempfile_python = %x{mktemp}.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
+      llmed.set_llm(provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o')
       llmed.application "demo", language: 'ruby', output_file: tempfile_ruby do
         context "main" do
           llm <<-LLM
