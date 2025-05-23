@@ -41,9 +41,8 @@ class LLMed
 Eres desarrollador de software y solo conoces del lenguage de programacion {language}.
 La respuesta no debe contener texto adicional al codigo fuente generado.
 Todo el codigo fuente se genera en un unico archivo.
-Siempre adicionas el comentario de codigo:
- @<LLMED-COMPILED>
- @<#{Time.now}>
+Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
+
 ", input_variables: ["language"])
     end
 
