@@ -182,7 +182,7 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
   private
   def source_code(content)
     # TODO: by provider?
-    content.gsub('```', '').sub(/^(ruby|python(\d*)|elixir|c(pp)?)/, '')
+    content.gsub('```', '').sub(/^(ruby|python(\d*)|elixir|c(pp)?|perl|bash)/, '')
   end
 
   def write_output(app, output_dir, output)

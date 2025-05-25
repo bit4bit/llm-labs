@@ -1,23 +1,23 @@
 set_llm provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o'
 set_language :ruby
 
-application "SIMPLE Editor", language: :python, output_file: "simpleeditor.ollmed" do
-  context "infrastructure" do
+application "SIMPLE Editor", language: :ruby, output_file: "simpleeditor.pl" do
+  context "dependencies" do
     <<-LLM
-    Must use gtk.
+    Must use GTK.
     LLM
   end
 
-  context "edit and save" do
+  context "application" do
     <<-LLM
     Has input as text editor.
-    Has at top menu the following actions:
+    Has top menu with following actions:
     - File
       - New
       - Open
       - Save
-    - Text
-      - Font Size (12 15 20 25) : this override the font size of the input.
+    - View
+      - Font Size (12 15 20 25) when selected this override the font size of the input.
     LLM
   end
 end
