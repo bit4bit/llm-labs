@@ -1,7 +1,7 @@
 set_llm provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o'
 set_language :ruby
 
-application "SIMPLE Editor", language: :ruby, output_file: "simpleeditor.pl" do
+application "SIMPLE Editor", language: :ruby, output_file: "simpleeditor.ollmed" do
   context "dependencies" do
     <<-LLM
     Must use GTK.
@@ -17,7 +17,9 @@ application "SIMPLE Editor", language: :ruby, output_file: "simpleeditor.pl" do
       - Open
       - Save
     - View
-      - Font Size (12 15 20 25) when selected this override the font size of the input.
+      - Font Size (12 15 20 25) when select this override the font size of the input.
+    - About
+      - LLMed when click popup message 'Compiled with LLMed\nhttps://github.com/bit4bit/llm-labs'.
     LLM
   end
 end

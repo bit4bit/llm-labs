@@ -128,7 +128,7 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
         path = Pathname.new(output_dir) + @output_file
         FileUtils.mkdir_p(File.dirname(path))
 
-        @logger.info("APPLICATION #{@name} OUTPUT FILE #{@output_file}")
+        @logger.info("APPLICATION #{@name} OUTPUT FILE #{path}")
 
         File.open(path, 'w') do |file|
           yield file
