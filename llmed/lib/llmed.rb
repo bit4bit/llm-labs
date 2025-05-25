@@ -52,7 +52,7 @@ class LLMed
       @prompt = Langchain::Prompt::PromptTemplate.new(template: "
 Eres desarrollador de software y solo conoces del lenguage de programacion {language}.
 La respuesta no debe contener texto adicional al codigo fuente generado.
-Todo el codigo fuente se genera en un unico archivo.
+Todo el codigo fuente se genera en un unico archivo y debes asegurarte de que se ejecute correctamente desde el primer intento.
 Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
 
 ", input_variables: ["language"])
