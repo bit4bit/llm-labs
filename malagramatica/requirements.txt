@@ -1,0 +1,5 @@
+langchain
+langchain[openai]
+langchain-google-genai
+langchain-community
+pygobject==3.50.0

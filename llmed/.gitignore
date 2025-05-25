@@ -1,0 +1,5 @@
+llmed-out/
+*.gem
+*.bundle
+*vendor
+bin/

@@ -1,0 +1,42 @@
+# Copyright 2025 Jovany Leandro G.C <bit4bit@riseup.net>
+# frozen_string_literal: true
+
+#!/bin/env ruby
+require 'optparse'
+require 'llmed'
+
+logger = Logger.new(STDOUT)
+output_dir = './llmed-out'
+template = <<-TMP
+set_llm provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o'
+
+application "hi world", language: '<HERE LANGUAGE>', output_file: "<HERE NAME>.rb" do
+  context "main" do
+    <<-LLM
+        Application do print 'hi world!'.
+    LLM
+  end
+end
+TMP
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: llmed [options]"
+  parser.on_tail("-h", "--help", "Show this message") do
+    puts parser
+    exit
+  end
+
+  parser.on('-t', '--template PATH', String, 'Create template') do |path|
+    File.write path, template
+    exit
+  end
+
+  parser.on('--output-dir DIR', String) do |path|
+    output_dir = path
+  end
+end
+
+source_path = ARGF.read
+llmed = LLMed.new(logger: logger)
+llmed.eval_source source_path
+llmed.compile(output_dir: output_dir)
