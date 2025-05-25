@@ -13,7 +13,7 @@ class LLMed
   extend Forwardable
 
   class Context
-    attr_reader :message, :name
+    attr_reader :name
 
     def initialize(name:, options: {})
       @name = name
@@ -22,6 +22,10 @@ class LLMed
 
     def skip?
       @skip
+    end
+
+    def message
+      "#{@name}\n\n#{@message}"
     end
 
     def llm(message)

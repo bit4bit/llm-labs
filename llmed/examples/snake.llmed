@@ -1,0 +1,36 @@
+set_llm provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o'
+set_language :ruby
+
+application "Snake", language: :ruby, output_file: "snake.ollmed" do
+  context "dependencies" do
+    <<-LLM
+    Must use GTK.
+    LLM
+  end
+
+  context "elements" do
+    <<-LLM
+    Has a snake.
+    Has random color fruit.
+    Has a clock in seconds.
+    Has a score.
+    Has gray walls.
+    Has black background.
+    LLM
+  end
+
+  context "video game" do
+    <<-LLM
+    The green snake grows every that eats a fruit.
+    Creates a fruit in a random position.
+    The user controll the green snake using the keyboard.
+    LLM
+  end
+
+  context "draw" do
+    <<-LLM
+    Draw the score and clock at bottom.
+    Must draw the walls.
+    LLM
+  end
+end
