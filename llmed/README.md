@@ -16,7 +16,7 @@ In classic terms the LLM is the Compiler, Source Code is the Binary, the Program
 ```ruby
 set_llm provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o'
 
-application "hi world", language: '<HERE LANGUAGE>', output_file: "<HERE NAME>.rb" do
+application "hi world", language: '<HERE LANGUAGE>', release: <NUMBER> output_file: "<HERE NAME>.rb" do
   context "main" do
     <<-LLM
         Application do print 'hi world!'.
@@ -24,6 +24,12 @@ application "hi world", language: '<HERE LANGUAGE>', output_file: "<HERE NAME>.r
   end
 end
 ```
+
+## Programming flow
+
+* Create and edit the application
+* Once you agree with a response from the provider, increase the value of the `release` attribute.
+* Commit the release file (.r<number>) and the source code (.llmed).
 
 # Installation
 

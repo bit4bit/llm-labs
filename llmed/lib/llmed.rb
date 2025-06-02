@@ -25,7 +25,7 @@ class LLMed
     end
 
     def message
-      "#{@name}\n\n#{@message}"
+      "# #{@name}\n\n#{@message}"
     end
 
     def llm(message)
@@ -55,15 +55,17 @@ La respuesta no debe contener texto adicional al codigo fuente generado.
 Todo el codigo fuente se genera en un unico archivo y debes asegurarte de que se ejecute correctamente desde el primer intento.
 Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
 
-", input_variables: ["language"])
+Debes solo modificar el siguiente codigo fuente: {source_code}.
+
+", input_variables: ["language", "source_code"])
     end
 
-    def prompt(language:)
-      @prompt.format(language: language)
+    def prompt(language:, source_code:)
+      @prompt.format(language: language, source_code: source_code)
     end
 
     def set_prompt(prompt)
-      @prompt = Langchain::Prompt::PromptTemplate.new(template: prompt, input_variables: ["language"])
+      @prompt = Langchain::Prompt::PromptTemplate.new(template: prompt, input_variables: ["language", "source_code"])
     end
 
     def set_language(language)
@@ -100,7 +102,7 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
   class Application
     attr_reader :contexts, :name, :language
 
-    def initialize(name:, language:, output_file:, block:, logger:)
+    def initialize(name:, language:, output_file:, block:, logger:, release:)
       raise "required language" if language.nil?
 
       @name = name
@@ -109,6 +111,7 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
       @block = block
       @contexts = []
       @logger = logger
+      @release = release
     end
 
     def context(name, **opts, &block)
@@ -125,7 +128,26 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
       self.instance_eval(&@block)
     end
 
-    def output_file(output_dir)
+    def source_code(output_dir, release_dir)
+      return unless @release
+      release_source_code = Pathname.new(release_dir) + "#{@output_file}.r#{@release}"
+      output_file = Pathname.new(output_dir) + @output_file
+      if @release and not File.exist?(release_source_code)
+        FileUtils.cp(output_file, release_source_code)
+      end
+
+      return File.read(release_source_code)
+    end
+
+    def read_output_file(output_dir)
+      output_file(output_dir, 'r') do |file|
+        return file.read()
+      end
+    rescue Errno::ENOENT
+      return ""
+    end
+
+    def output_file(output_dir, mode = 'w')
       if @output_file.respond_to? :write
         yield @output_file
       else
@@ -134,7 +156,7 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
 
         @logger.info("APPLICATION #{@name} OUTPUT FILE #{path}")
 
-        File.open(path, 'w') do |file|
+        File.open(path, mode) do |file|
           yield file
         end
       end
@@ -158,17 +180,18 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
   # changes default prompt
   def_delegator :@configuration, :set_prompt, :set_prompt
 
-  def application(name, language: nil, output_file:, &block)
-    @app = Application.new(name: name, language: @configuration.language(language), output_file: output_file, block: block, logger: @logger)
+  def application(name, language: nil, release: nil, output_file:, &block)
+    @app = Application.new(name: name, language: @configuration.language(language), output_file: output_file, block: block, logger: @logger, release: release)
     @applications << @app
   end
 
-  def compile(output_dir:)
+  def compile(output_dir:, release_dir: nil)
+    release_dir = output_dir unless release_dir
     @applications.each do |app|
       llm = @configuration.llm()
-
+      system_content = @configuration.prompt(language: app.language, source_code: app.source_code(output_dir, release_dir))
       messages = [
-        {role: "system", content: @configuration.prompt(language: app.language)},
+        {role: "system", content: system_content},
       ]
       app.evaluate
       app.contexts.each do |ctx|
@@ -193,5 +216,13 @@ Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
     app.output_file(output_dir) do |file|
       file.write(output)
     end
+  end
+
+  def edit_same_source_code(app, output_dir, messages)
+    content = ""
+    app.output_file(output_dir, 'r') do |file|
+      content = "Codigo fuente a modificar: #{file.read()}"
+    end
+    messages << {role: "user", content: content}
   end
 end
