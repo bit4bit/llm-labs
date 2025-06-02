@@ -130,7 +130,7 @@ Debes solo modificar el siguiente codigo fuente: {source_code}.
 
     def source_code(output_dir, release_dir)
       return unless @release
-      release_source_code = Pathname.new(release_dir) + "#{@output_file}.r#{@release}"
+      release_source_code = Pathname.new(release_dir) + "#{@output_file}.r#{@release}#{@language}"
       output_file = Pathname.new(output_dir) + @output_file
       if @release and not File.exist?(release_source_code)
         FileUtils.cp(output_file, release_source_code)
