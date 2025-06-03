@@ -134,17 +134,10 @@ Debes solo modificar el siguiente codigo fuente: {source_code}.
       output_file = Pathname.new(output_dir) + @output_file
       if @release and not File.exist?(release_source_code)
         FileUtils.cp(output_file, release_source_code)
+        @logger.info("APPLICATION #{@name} RELEASE FILE #{release_source_code}")
       end
 
       return File.read(release_source_code)
-    end
-
-    def read_output_file(output_dir)
-      output_file(output_dir, 'r') do |file|
-        return file.read()
-      end
-    rescue Errno::ENOENT
-      return ""
     end
 
     def output_file(output_dir, mode = 'w')
