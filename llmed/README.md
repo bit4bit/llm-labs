@@ -36,8 +36,9 @@ end
 
 * `gem install llmed`
 * `llmed -t /tmp/demo.llmed`
-  * edit
-  * compile `llmed /tmp/demo.llmed`
+* edit
+* compile to legacy source code `llmed /tmp/demo.llmed`
+* execute or compile the legacy source code.
 
 # Usage Development
 
