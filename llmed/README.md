@@ -35,6 +35,9 @@ end
 # Usage
 
 * `gem install llmed`
+* or local user
+  * `gem install --user-install llmed`
+  * add to `PATH` the path `~/.local/share/gem/ruby/<RUBY VERSION example 3.0.1>/bin/`
 * `llmed -t /tmp/demo.llmed`
 * edit
 * compile to legacy source code `llmed /tmp/demo.llmed`
