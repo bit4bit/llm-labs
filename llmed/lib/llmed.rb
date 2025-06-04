@@ -221,7 +221,7 @@ You must only modify the following source code:
   private
   def source_code(content)
     # TODO: by provider?
-    content.gsub('```', '').sub(/^(ruby|python(\d*)|elixir|c(pp)?|perl|bash)/, '')
+    content.gsub('```', '').sub(/^(node(js)?|javascript|ruby|python(\d*)|elixir|perl|bash|c(pp)?)/, '')
   end
 
   def write_output(app, output_dir, output)
