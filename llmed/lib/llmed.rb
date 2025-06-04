@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'pp'
+require 'openai'
 require 'langchain'
 require 'pathname'
 require 'fileutils'
@@ -191,6 +192,8 @@ You must only modify the following source code:
   def compile(output_dir:, release_dir: nil)
     release_dir = output_dir unless release_dir
     @applications.each do |app|
+      @logger.info("APPLICATION #{app.name} COMPILING")
+
       llm = @configuration.llm()
       system_content = @configuration.prompt(language: app.language, source_code: app.source_code(output_dir, release_dir))
       messages = [

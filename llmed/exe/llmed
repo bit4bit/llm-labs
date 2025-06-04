@@ -43,11 +43,11 @@ OptionParser.new do |parser|
   end
 end.parse!
 
-source_path = ARGF.read
+source_code = ARGF.read
 if ARGF.respond_to?(:path)
   release_dir = File.dirname(ARGF.path)
 end
 
 llmed = LLMed.new(logger: logger)
-llmed.eval_source source_path
+llmed.eval_source source_code
 llmed.compile(output_dir: output_dir, release_dir: release_dir)
