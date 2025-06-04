@@ -32,13 +32,17 @@ end
   * Once you agree with the provider's response, increase the value of the `release` attribute
 * Commit the release file (.r<number>) and the source code (.llmed).
 
-# Installation
+# Usage
 
-* `bundle3.1 install --path vendor/`
+* `gem install llmed`
+* `llmed -t /tmp/demo.llmed`
+  * edit
+  * compile `llmed /tmp/demo.llmed`
 
 # Usage Development
 
-`OPENAI_API_KEY=xxx rake llmed[examples/tictactoe.rb]`
+* `bundle3.1 install --path vendor/`
+* `OPENAI_API_KEY=xxx rake llmed[examples/tictactoe.rb]`
 
 # History
 
