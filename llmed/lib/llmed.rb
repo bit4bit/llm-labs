@@ -36,26 +36,30 @@ class LLMed
       not (@message.nil? || @message.empty?)
     end
 
-
+    # Example:
+    #  context("application") { from_file("application.cllmed") }
     def from_file(path)
       File.read(path)
     end
 
+    # Example:
+    #  context("source") { from_source_code("sourcepathtoinclude") }
     def from_source_code(path)
       code = File.read(path)
-      "Dado el codigo fuente: #{code}\n\n\n"
+      " Given the following source code: #{code}\n\n\n"
     end
   end
 
   class Configuration
     def initialize
       @prompt = Langchain::Prompt::PromptTemplate.new(template: "
-Eres desarrollador de software y solo conoces del lenguage de programacion {language}.
-La respuesta no debe contener texto adicional al codigo fuente generado.
-Todo el codigo fuente se genera en un unico archivo y debes asegurarte de que se ejecute correctamente desde el primer intento.
-Siempre adicionas el comentario de codigo correctamente escapado LLMED-COMPILED.
+You are a software developer and only have knowledge of the programming language {language}.
+Your response must contain only the generated source code, with no additional text.
+All source code must be written in a single file, and you must ensure it runs correctly on the first attempt.
+Always include the properly escaped comment: LLMED-COMPILED.
 
-Debes solo modificar el siguiente codigo fuente: {source_code}.
+You must only modify the following source code:
+{source_code}
 
 ", input_variables: ["language", "source_code"])
     end
@@ -64,10 +68,16 @@ Debes solo modificar el siguiente codigo fuente: {source_code}.
       @prompt.format(language: language, source_code: source_code)
     end
 
+    # Change the default prompt, input variables: language, source_code
+    # Example:
+    #  set_prompt "my new prompt"
     def set_prompt(prompt)
       @prompt = Langchain::Prompt::PromptTemplate.new(template: prompt, input_variables: ["language", "source_code"])
     end
 
+    # Set default language used for all applications.
+    # Example:
+    #  set_langugage :ruby
     def set_language(language)
       @language = language
     end
