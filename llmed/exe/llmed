@@ -4,7 +4,7 @@
 require 'optparse'
 require 'llmed'
 
-logger = Logger.new(STDOUT)
+logger = Logger.new(STDERR)
 output_dir = './llmed-out'
 release_dir = output_dir
 template = <<-TMP
@@ -40,6 +40,10 @@ OptionParser.new do |parser|
 
   parser.on('--release-dir DIR', String) do |path|
     release_dir = path
+  end
+
+  parser.on('-q', '--quiet') do
+    logger.level = :error
   end
 end.parse!
 

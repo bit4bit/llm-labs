@@ -38,6 +38,12 @@ class LLMed
     end
 
     # Example:
+    #  context("files") { sh "ls /etc" }
+    def sh(cmd)
+      %x{#{cmd}}
+    end
+
+    # Example:
     #  context("application") { from_file("application.cllmed") }
     def from_file(path)
       File.read(path)
@@ -72,8 +78,8 @@ You must only modify the following source code:
     # Change the default prompt, input variables: language, source_code
     # Example:
     #  set_prompt "my new prompt"
-    def set_prompt(prompt)
-      @prompt = Langchain::Prompt::PromptTemplate.new(template: prompt, input_variables: ["language", "source_code"])
+    def set_prompt(prompt, input_variables: ["language", "source_code"])
+      @prompt = Langchain::Prompt::PromptTemplate.new(template: prompt, input_variables: input_variables)
     end
 
     # Set default language used for all applications.
