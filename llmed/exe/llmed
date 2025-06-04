@@ -1,7 +1,6 @@
+#!/bin/env ruby
 # Copyright 2025 Jovany Leandro G.C <bit4bit@riseup.net>
 # frozen_string_literal: true
-
-#!/bin/env ruby
 require 'optparse'
 require 'llmed'
 
@@ -11,17 +10,18 @@ release_dir = output_dir
 template = <<-TMP
 set_llm provider: :openai, api_key: ENV['OPENAI_API_KEY'], model: 'gpt-4o'
 
-application "hi world", language: '<HERE LANGUAGE>', output_file: "<HERE NAME>.rb" do
+# Increment the RELEASE number once you approve the output.
+application "hi world", release: nil, language: '<HERE LANGUAGE>', output_file: "<HERE NAME>.ollmed" do
   context "main" do
     <<-LLM
-        Application do print 'hi world!'.
+        Show to user 'hi world!'.
     LLM
   end
 end
 TMP
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: llmed [options]"
+  parser.banner = "Usage: llmed [options] <application file .llmed or stdin>"
   parser.on_tail("-h", "--help", "Show this message") do
     puts parser
     exit
@@ -39,7 +39,7 @@ OptionParser.new do |parser|
   parser.on('--release-dir DIR', String) do |path|
     release_dir = path
   end
-end
+end.parse!
 
 source_path = ARGF.read
 if ARGF.respond_to?(:path)
