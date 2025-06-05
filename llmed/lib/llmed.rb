@@ -34,13 +34,13 @@ class LLMed
     end
 
     def message?
-      not (@message.nil? || @message.empty?)
+      !(@message.nil? || @message.empty?)
     end
 
     # Example:
     #  context("files") { sh "ls /etc" }
     def sh(cmd)
-      %x{#{cmd}}
+      `#{cmd}`
     end
 
     # Example:
@@ -68,7 +68,7 @@ Always include the properly escaped comment: LLMED-COMPILED.
 You must only modify the following source code:
 {source_code}
 
-", input_variables: ["language", "source_code"])
+", input_variables: %w[language source_code])
     end
 
     def prompt(language:, source_code:)
@@ -78,7 +78,7 @@ You must only modify the following source code:
     # Change the default prompt, input variables: language, source_code
     # Example:
     #  set_prompt "my new prompt"
-    def set_prompt(prompt, input_variables: ["language", "source_code"])
+    def set_prompt(prompt, input_variables: %w[language source_code])
       @prompt = Langchain::Prompt::PromptTemplate.new(template: prompt, input_variables: input_variables)
     end
 
@@ -97,19 +97,20 @@ You must only modify the following source code:
 
     def language(main)
       lang = main || @language
-      raise "Please assign a language to the application or general with the function set_languag" if lang.nil?
+      raise 'Please assign a language to the application or general with the function set_languag' if lang.nil?
+
       lang
     end
 
-    def llm()
+    def llm
       case @provider
       when :openai
         Langchain::LLM::OpenAI.new(
           api_key: @provider_api_key,
-          default_options: { temperature: 0.7, chat_model: @provider_model}
+          default_options: { temperature: 0.7, chat_model: @provider_model }
         )
       when nil
-        raise "Please set the provider with `set_llm(provider, api_key, model)`"
+        raise 'Please set the provider with `set_llm(provider, api_key, model)`'
       else
         raise "not implemented provider #{@provider}"
       end
@@ -120,7 +121,7 @@ You must only modify the following source code:
     attr_reader :contexts, :name, :language
 
     def initialize(name:, language:, output_file:, block:, logger:, release:)
-      raise "required language" if language.nil?
+      raise 'required language' if language.nil?
 
       @name = name
       @output_file = output_file
@@ -134,30 +135,29 @@ You must only modify the following source code:
     def context(name, **opts, &block)
       ctx = Context.new(name: name, options: opts)
       output = ctx.instance_eval(&block)
-      unless ctx.message?
-        ctx.llm(output)
-      end
+      ctx.llm(output) unless ctx.message?
 
       @contexts << ctx
     end
 
     def evaluate
-      self.instance_eval(&@block)
+      instance_eval(&@block)
     end
 
     def source_code(output_dir, release_dir)
       return unless @release
+
       release_source_code = Pathname.new(release_dir) + "#{@output_file}.r#{@release}#{@language}"
       output_file = Pathname.new(output_dir) + @output_file
-      if @release and not File.exist?(release_source_code)
+      if @release && !File.exist?(release_source_code)
         FileUtils.cp(output_file, release_source_code)
         @logger.info("APPLICATION #{@name} RELEASE FILE #{release_source_code}")
       end
 
-      return File.read(release_source_code)
+      File.read(release_source_code)
     end
 
-    def output_file(output_dir, mode = 'w')
+    def output_file(output_dir, mode = 'w', &block)
       if @output_file.respond_to? :write
         yield @output_file
       else
@@ -166,9 +166,7 @@ You must only modify the following source code:
 
         @logger.info("APPLICATION #{@name} OUTPUT FILE #{path}")
 
-        File.open(path, mode) do |file|
-          yield file
-        end
+        File.open(path, mode, &block)
       end
     end
   end
@@ -176,11 +174,11 @@ You must only modify the following source code:
   def initialize(logger:)
     @logger = logger
     @applications = []
-    @configuration = Configuration.new()
+    @configuration = Configuration.new
   end
 
   def eval_source(code)
-    self.instance_eval(code)
+    instance_eval(code)
   end
 
   # changes default language
@@ -190,35 +188,44 @@ You must only modify the following source code:
   # changes default prompt
   def_delegator :@configuration, :set_prompt, :set_prompt
 
-  def application(name, language: nil, release: nil, output_file:, &block)
-    @app = Application.new(name: name, language: @configuration.language(language), output_file: output_file, block: block, logger: @logger, release: release)
+  def application(name, output_file:, language: nil, release: nil, &block)
+    @app = Application.new(name: name, language: @configuration.language(language), output_file: output_file,
+                           block: block, logger: @logger, release: release)
     @applications << @app
   end
 
   def compile(output_dir:, release_dir: nil)
-    release_dir = output_dir unless release_dir
-    @applications.each do |app|
-      @logger.info("APPLICATION #{app.name} COMPILING")
-
-      llm = @configuration.llm()
-      system_content = @configuration.prompt(language: app.language, source_code: app.source_code(output_dir, release_dir))
-      messages = [
-        {role: "system", content: system_content},
-      ]
-      app.evaluate
-      app.contexts.each do |ctx|
-        next if ctx.skip?
-        messages << {role: "user", content: ctx.message}
-      end
-
-      llm_response = llm.chat(messages: messages)
-      response = llm_response.chat_completion
-      @logger.info("APPLICATION #{app.name} TOTAL TOKENS #{llm_response.total_tokens}")
-      write_output(app, output_dir, source_code(response))
-    end
+    @applications.each { |app| compile_application(app, output_dir, release_dir) }
   end
 
   private
+
+  def compile_application(app, output_dir, release_dir)
+    release_dir ||= output_dir
+
+    @logger.info("APPLICATION #{app.name} COMPILING")
+
+    llm = @configuration.llm
+    system_content = @configuration.prompt(language: app.language,
+                                           source_code: app.source_code(
+                                             output_dir, release_dir
+                                           ))
+    messages = [
+      { role: 'system', content: system_content }
+    ]
+    app.evaluate
+    app.contexts.each do |ctx|
+      next if ctx.skip?
+
+      messages << { role: 'user', content: ctx.message }
+    end
+
+    llm_response = llm.chat(messages: messages)
+    response = llm_response.chat_completion
+    @logger.info("APPLICATION #{app.name} TOTAL TOKENS #{llm_response.total_tokens}")
+    write_output(app, output_dir, source_code(response))
+  end
+
   def source_code(content)
     # TODO: by provider?
     content.gsub('```', '').sub(/^(node(js)?|javascript|ruby|python(\d*)|elixir|perl|bash|c(pp)?)/, '')
@@ -231,10 +238,10 @@ You must only modify the following source code:
   end
 
   def edit_same_source_code(app, output_dir, messages)
-    content = ""
+    content = ''
     app.output_file(output_dir, 'r') do |file|
-      content = "Codigo fuente a modificar: #{file.read()}"
+      content = "Codigo fuente a modificar: #{file.read}"
     end
-    messages << {role: "user", content: content}
+    messages << { role: 'user', content: content }
   end
 end
