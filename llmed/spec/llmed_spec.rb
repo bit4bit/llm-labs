@@ -14,15 +14,28 @@ describe LLMed do
     llmed.set_llm provider: :openai, api_key: 'key', model: 'model'
   end
 
+  it 'prompt from file' do
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    output = StringIO.new
+    llmed.set_language :ruby
+    llmed.set_llm(provider: :test, api_key: '', model: '')
+    llmed.set_prompt(file: './spec/external_prompt.pllmed')
+    llmed.application('demo', output_file: output) {}
+    llmed.compile(output_dir: '/tmp')
+
+    expect(output.string).to including('LLMED external prompt')
+  end
+
   context 'ruby application' do
     it 'compile application skip context' do
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.set_language 'ruby'
       fake = StringIO.new
       llmed.application 'demo', output_file: fake do
-        context('main', :skip) { from_file('./spec/hiworld.cllmed') }
+        context('main', skip: true) { from_file('./spec/hiworld.cllmed') }
       end
       llmed.compile(output_dir: '/tmp')
 
@@ -32,7 +45,7 @@ describe LLMed do
     it 'compile application to file' do
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.set_language 'ruby'
       fake = StringIO.new
       llmed.application 'demo', output_file: fake do
@@ -48,7 +61,7 @@ describe LLMed do
       tempfile_bye = `mktemp`.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.set_language 'ruby'
 
       llmed.application 'main', output_file: tempfile do
@@ -79,7 +92,7 @@ describe LLMed do
       tempfile = `mktemp`.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.set_language 'ruby'
       llmed.application 'demo', output_file: tempfile do
         context('main') { from_file('./spec/hiworld.cllmed') }
@@ -94,7 +107,7 @@ describe LLMed do
       tempfile = `mktemp`.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.set_language 'ruby'
       llmed.application 'demo', output_file: tempfile do
         context 'main' do
@@ -113,7 +126,7 @@ describe LLMed do
       tempfile = `mktemp`.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.application 'demo', language: 'ruby', output_file: tempfile do
         context 'main' do
           llm <<-LLM
@@ -131,7 +144,7 @@ describe LLMed do
       tempfile = `mktemp`.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.eval_source <<-SOURCE
     application "demo", language: 'ruby', output_file: '#{tempfile}' do
       context "main" do
@@ -153,7 +166,7 @@ describe LLMed do
       tempfile = `mktemp`.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.application 'demo', language: 'python', output_file: tempfile do
         context 'main' do
           llm <<-LLM
@@ -171,7 +184,7 @@ describe LLMed do
       tempfile = `mktemp`.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.eval_source <<-SOURCE
     application "demo", language: 'python', output_file: '#{tempfile}' do
       context "main" do
@@ -194,7 +207,7 @@ describe LLMed do
       tempfile_python = `mktemp`.chomp
       logger = Logger.new(STDOUT)
       llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o')
+      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
       llmed.application 'demo', language: 'ruby', output_file: tempfile_ruby do
         context 'main' do
           llm <<-LLM

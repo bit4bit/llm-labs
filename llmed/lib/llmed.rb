@@ -2,13 +2,9 @@
 # frozen_string_literal: true
 
 require 'pp'
-require 'openai'
-require 'langchain'
 require 'pathname'
 require 'fileutils'
 require 'forwardable'
-
-Langchain.logger.level = Logger::ERROR
 
 class LLMed
   extend Forwardable
@@ -59,7 +55,7 @@ class LLMed
 
   class Configuration
     def initialize
-      @prompt = Langchain::Prompt::PromptTemplate.new(template: "
+      @prompt = LLMed::LLM::Template.build(template: "
 You are a software developer and only have knowledge of the programming language {language}.
 Your response must contain only the generated source code, with no additional text.
 All source code must be written in a single file, and you must ensure it runs correctly on the first attempt.
@@ -78,8 +74,11 @@ You must only modify the following source code:
     # Change the default prompt, input variables: language, source_code
     # Example:
     #  set_prompt "my new prompt"
-    def set_prompt(prompt, input_variables: %w[language source_code])
-      @prompt = Langchain::Prompt::PromptTemplate.new(template: prompt, input_variables: input_variables)
+    def set_prompt(*arg, input_variables: %w[language source_code], **args)
+      input_variables = {} if args[:file]
+      prompt = File.read(args[:file]) if args[:file]
+      prompt ||= arg.first
+      @prompt = LLMed::LLM::Template.build(template: prompt, input_variables: input_variables)
     end
 
     # Set default language used for all applications.
@@ -105,10 +104,12 @@ You must only modify the following source code:
     def llm
       case @provider
       when :openai
-        Langchain::LLM::OpenAI.new(
+        LLMed::LLM::OpenAI.new(
           api_key: @provider_api_key,
           default_options: { temperature: 0.7, chat_model: @provider_model }
         )
+      when :test
+        LLMed::LLM::Test.new
       when nil
         raise 'Please set the provider with `set_llm(provider, api_key, model)`'
       else
@@ -210,18 +211,16 @@ You must only modify the following source code:
                                            source_code: app.source_code(
                                              output_dir, release_dir
                                            ))
-    messages = [
-      { role: 'system', content: system_content }
-    ]
+    messages = [LLMed::LLM::Message::System.new(system_content)]
     app.evaluate
     app.contexts.each do |ctx|
       next if ctx.skip?
 
-      messages << { role: 'user', content: ctx.message }
+      messages << LLMed::LLM::Message::User.new(ctx.message)
     end
 
     llm_response = llm.chat(messages: messages)
-    response = llm_response.chat_completion
+    response = llm_response.source_code
     @logger.info("APPLICATION #{app.name} TOTAL TOKENS #{llm_response.total_tokens}")
     write_output(app, output_dir, source_code(response))
   end
@@ -245,3 +244,5 @@ You must only modify the following source code:
     messages << { role: 'user', content: content }
   end
 end
+
+require_relative 'llm'
