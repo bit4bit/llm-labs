@@ -27,125 +27,124 @@ describe LLMed do
     expect(output.string).to including('LLMED external prompt')
   end
 
-  context 'ruby application' do
-    it 'compile application skip context' do
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.set_language 'ruby'
-      fake = StringIO.new
-      llmed.application 'demo', output_file: fake do
-        context('main', skip: true) { from_file('./spec/hiworld.cllmed') }
-      end
-      llmed.compile(output_dir: '/tmp')
-
-      expect(fake.string).not_to including('hola mundo')
+  it 'compile application skip context' do
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
+    llmed.set_language 'ruby'
+    fake = StringIO.new
+    llmed.application 'demo', output_file: fake do
+      context('main', skip: true) { from_file('./spec/hiworld.cllmed') }
     end
+    llmed.compile(output_dir: '/tmp')
 
-    it 'compile application to file' do
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.set_language 'ruby'
-      fake = StringIO.new
-      llmed.application 'demo', output_file: fake do
-        context('main') { from_file('./spec/hiworld.cllmed') }
-      end
-      llmed.compile(output_dir: '/tmp')
+    expect(fake.string).not_to including('hola mundo')
+  end
 
-      expect(fake.string).to including("puts 'hola mundo'")
+  it 'compile application to file' do
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
+    llmed.set_language 'ruby'
+    fake = StringIO.new
+    llmed.application 'demo', output_file: fake do
+      context('main') { from_file('./spec/hiworld.cllmed') }
     end
+    llmed.compile(output_dir: '/tmp')
 
-    it 'compile application connecting applications through output' do
-      tempfile = `mktemp`.chomp
-      tempfile_bye = `mktemp`.chomp
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.set_language 'ruby'
+    expect(fake.string).to including("puts 'hola mundo'")
+  end
 
-      llmed.application 'main', output_file: tempfile do
-        context 'main' do
-          llm <<-LLM
+  it 'compile application connecting applications through output' do
+    tempfile = `mktemp`.chomp
+    tempfile_bye = `mktemp`.chomp
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
+    llmed.set_language 'ruby'
+
+    llmed.application 'main', output_file: tempfile do
+      context 'main' do
+        llm <<-LLM
         Imprimir mensaje 'hola mundo'.
           LLM
-        end
       end
+    end
 
-      llmed.application 'demo', output_file: tempfile_bye do
-        context('main') { from_source_code(tempfile) }
+    llmed.application 'demo', output_file: tempfile_bye do
+      context('main') { from_source_code(tempfile) }
 
-        context('adicionar despedida') do
-          <<-LLM
+      context('adicionar despedida') do
+        <<-LLM
           Adicionar mensaje de despedida 'bye mundo'.
           LLM
-        end
       end
-
-      llmed.compile(output_dir: '/tmp')
-
-      expect(File.read(tempfile_bye)).to including("puts 'hola mundo'")
-      expect(File.read(tempfile_bye)).to including("puts 'bye mundo'")
     end
 
-    it 'compile application including context' do
-      tempfile = `mktemp`.chomp
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.set_language 'ruby'
-      llmed.application 'demo', output_file: tempfile do
-        context('main') { from_file('./spec/hiworld.cllmed') }
-      end
+    llmed.compile(output_dir: '/tmp')
 
-      llmed.compile(output_dir: '/tmp')
+    expect(File.read(tempfile_bye)).to including("puts 'hola mundo'")
+    expect(File.read(tempfile_bye)).to including("puts 'bye mundo'")
+  end
 
-      expect(File.read(tempfile)).to including("puts 'hola mundo'")
+  it 'compile application including context' do
+    tempfile = `mktemp`.chomp
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
+    llmed.set_language 'ruby'
+    llmed.application 'demo', output_file: tempfile do
+      context('main') { from_file('./spec/hiworld.cllmed') }
     end
 
-    it 'compile application with implicit language' do
-      tempfile = `mktemp`.chomp
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.set_language 'ruby'
-      llmed.application 'demo', output_file: tempfile do
-        context 'main' do
-          llm <<-LLM
+    llmed.compile(output_dir: '/tmp')
+
+    expect(File.read(tempfile)).to including("puts 'hola mundo'")
+  end
+
+  it 'compile application with implicit language' do
+    tempfile = `mktemp`.chomp
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
+    llmed.set_language 'ruby'
+    llmed.application 'demo', output_file: tempfile do
+      context 'main' do
+        llm <<-LLM
         Codigo que imprima 'hola mundo'.
           LLM
-        end
       end
-
-      llmed.compile(output_dir: '/tmp')
-
-      expect(File.read(tempfile)).to including("puts 'hola mundo'")
     end
 
-    it 'compile application with explicit language' do
-      tempfile = `mktemp`.chomp
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.application 'demo', language: 'ruby', output_file: tempfile do
-        context 'main' do
-          llm <<-LLM
+    llmed.compile(output_dir: '/tmp')
+
+    expect(File.read(tempfile)).to including("puts 'hola mundo'")
+  end
+
+  it 'compile application with explicit language' do
+    tempfile = `mktemp`.chomp
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
+    llmed.application 'demo', language: 'ruby', output_file: tempfile do
+      context 'main' do
+        llm <<-LLM
         Codigo que imprima 'hola mundo'.
           LLM
-        end
       end
-
-      llmed.compile(output_dir: '/tmp')
-
-      expect(File.read(tempfile)).to including("puts 'hola mundo'")
     end
 
-    it 'compile application from string' do
-      tempfile = `mktemp`.chomp
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.eval_source <<-SOURCE
+    llmed.compile(output_dir: '/tmp')
+
+    expect(File.read(tempfile)).to including("puts 'hola mundo'")
+  end
+
+  it 'compile application from string' do
+    tempfile = `mktemp`.chomp
+    logger = Logger.new(STDOUT)
+    llmed = LLMed.new(logger: logger)
+    llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
+    llmed.eval_source <<-SOURCE
     application "demo", language: 'ruby', output_file: '#{tempfile}' do
       context "main" do
         llm <<-LLM
@@ -155,50 +154,9 @@ describe LLMed do
     end
       SOURCE
 
-      llmed.compile(output_dir: '/tmp')
+    llmed.compile(output_dir: '/tmp')
 
-      expect(File.read(tempfile)).to including("puts 'hola mundo'")
-    end
-  end
-
-  context 'python application' do
-    it 'compile application' do
-      tempfile = `mktemp`.chomp
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.application 'demo', language: 'python', output_file: tempfile do
-        context 'main' do
-          llm <<-LLM
-        Codigo que imprima 'hola mundo'.
-          LLM
-        end
-      end
-
-      llmed.compile(output_dir: '/tmp')
-
-      expect(File.read(tempfile)).to including("print('hola mundo')")
-    end
-
-    it 'compile application from string' do
-      tempfile = `mktemp`.chomp
-      logger = Logger.new(STDOUT)
-      llmed = LLMed.new(logger: logger)
-      llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
-      llmed.eval_source <<-SOURCE
-    application "demo", language: 'python', output_file: '#{tempfile}' do
-      context "main" do
-        llm <<-LLM
-        Codigo python que imprima 'hola mundo'.
-        LLM
-      end
-    end
-      SOURCE
-
-      llmed.compile(output_dir: '/tmp')
-
-      expect(File.read(tempfile)).to including("print('hola mundo')")
-    end
+    expect(File.read(tempfile)).to including("puts 'hola mundo'")
   end
 
   context 'multiple applications' do
