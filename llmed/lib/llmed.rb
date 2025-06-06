@@ -238,14 +238,6 @@ You must only modify the following source code:
       file.write(output)
     end
   end
-
-  def edit_same_source_code(app, output_dir, messages)
-    content = ''
-    app.output_file(output_dir, 'r') do |file|
-      content = "Codigo fuente a modificar: #{file.read}"
-    end
-    messages << { role: 'user', content: content }
-  end
 end
 
 require_relative 'llm'
