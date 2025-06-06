@@ -55,7 +55,7 @@ describe LLMed do
     @llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
     @llmed.set_language 'ruby'
     output_file = `mktemp`.chomp
-    release_file = "#{output_file}.rllmed"
+    release_file = "#{output_file}.release"
 
     # first iteration
     @llmed.application 'demo', output_file: output_file do
