@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'pp'
+require 'csv'
 require 'pathname'
 require 'fileutils'
 require 'forwardable'
@@ -173,6 +174,18 @@ You must only modify the following source code:
         File.open(path, mode, &block)
       end
     end
+
+    def write_statistics(release_dir, total_tokens)
+      return unless @output_file.is_a?(String)
+
+      statistics_file = Pathname.new(release_dir) + "#{@output_file}.statistics"
+
+      File.open(statistics_file, 'a') do |file|
+        csv = CSV.new(file)
+        csv << [Time.now.to_i, @name, @release, total_tokens]
+      end
+      @logger.info("APPLICATION #{@name} WROTE STATISTICS FILE #{statistics_file}")
+    end
   end
 
   def initialize(logger:)
@@ -226,11 +239,16 @@ You must only modify the following source code:
     response = llm_response.source_code
     @logger.info("APPLICATION #{app.name} TOTAL TOKENS #{llm_response.total_tokens}")
     write_output(app, output_dir, source_code(response))
+    write_statistics(app, release_dir, llm_response)
   end
 
   def source_code(content)
     # TODO: by provider?
     content.gsub('```', '').sub(/^(node(js)?|javascript|ruby|python(\d*)|elixir|perl|bash|c(pp)?)/, '')
+  end
+
+  def write_statistics(app, release_dir, response)
+    app.write_statistics(release_dir, response.total_tokens)
   end
 
   def write_output(app, output_dir, output)

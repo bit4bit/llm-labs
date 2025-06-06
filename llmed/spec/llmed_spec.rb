@@ -39,7 +39,24 @@ describe LLMed do
     expect(fake.string).not_to including('hola mundo')
   end
 
-  it 'compile application to file' do
+  it 'compile application to file with statistics' do
+    output_file = `mktemp`.chomp
+    output_stats = "#{output_file}.statistics"
+    @llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
+    @llmed.set_language 'ruby'
+    @llmed.application 'demo', output_file: output_file do
+      context('main') { from_file('./spec/hiworld.cllmed') }
+    end
+    @llmed.compile(output_dir: '')
+
+    expect(File.read(output_file)).to including("puts 'hola mundo'")
+    stats = CSV.new(File.read(output_stats)).read
+    expect(stats[0][1]).to eq('demo')
+    expect(stats[0][2]).to eq(nil)
+    expect(stats[0][3].to_i).to be > 0
+  end
+
+  it 'compile application to STDOUT' do
     @llmed.set_llm(provider: :openai, api_key: ENV.fetch('OPENAI_API_KEY', nil), model: 'gpt-4o-mini')
     @llmed.set_language 'ruby'
     fake = StringIO.new
