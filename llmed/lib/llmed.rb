@@ -146,16 +146,19 @@ You must only modify the following source code:
     end
 
     def source_code(output_dir, release_dir)
+      return unless @output_file.is_a?(String)
       return unless @release
 
-      release_source_code = Pathname.new(release_dir) + "#{@output_file}.r#{@release}#{@language}"
+      release_source_code = Pathname.new(release_dir) + "#{@output_file}.r#{@release}#{@language}.cache"
+      release_main_source_code = Pathname.new(release_dir) + "#{@output_file}.release"
       output_file = Pathname.new(output_dir) + @output_file
       if @release && !File.exist?(release_source_code)
         FileUtils.cp(output_file, release_source_code)
+        FileUtils.cp(output_file, release_main_source_code)
         @logger.info("APPLICATION #{@name} RELEASE FILE #{release_source_code}")
       end
-
-      File.read(release_source_code)
+      @logger.info("APPLICATION #{@name} INPUT RELEASE FILE #{release_main_source_code}")
+      File.read(release_main_source_code)
     end
 
     def output_file(output_dir, mode = 'w', &block)
