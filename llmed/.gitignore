@@ -1,6 +1,0 @@
-llmed-out/
-*.gem
-*.bundle
-*vendor
-bin/
-**.cache
