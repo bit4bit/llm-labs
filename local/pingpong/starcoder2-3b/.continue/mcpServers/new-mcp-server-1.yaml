@@ -1,0 +1,7 @@
+name: New MCP server
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: docfork
+    url: "https://mcp.dockfork.com/mcp"
+    type: "streamable-http"

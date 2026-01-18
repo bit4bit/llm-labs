@@ -3,11 +3,11 @@ CC = gcc
 LD = ld
 OBJCOPY = objcopy
 
-ASFLAGS = -f elf32
-CFLAGS = -m32 -ffreestanding -fno-pie -O2 -Wall -Wextra
-LDFLAGS = -T linker.ld -melf_i386
+ASFLAGS = -f elf64
+CFLAGS = -m64 -ffreestanding -fno-pie -O2 -Wall -Wextra -mno-red-zone
+LDFLAGS = -T linker.ld -melf_x86_64
 
-KERNEL_OBJS = kernel/entry.o kernel/main.o
+KERNEL_OBJS = kernel/entry.o kernel/main.o kernel/vga.o kernel/multiboot2.o
 
 .PHONY: all iso run debug deps clean
 
@@ -19,33 +19,41 @@ kernel.elf: $(KERNEL_OBJS) linker.ld
 kernel/entry.o: kernel/entry.asm
 	$(AS) $(ASFLAGS) -o $@ $<
 
-kernel/main.o: kernel/main.c
+kernel/main.o: kernel/main.c kernel/vga.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+kernel/vga.o: kernel/vga.c kernel/vga.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+kernel/multiboot2.o: kernel/multiboot2.c kernel/multiboot2.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 iso: kernel.elf
-	rm -rf iso/boot/stage2_eltorito iso/boot/grub/boot.img
+	rm -rf iso/boot
 	mkdir -p iso/boot/grub
 	cp kernel.elf iso/boot/minios.elf
-	cp iso/boot/grub/grub.cfg.template iso/boot/grub/grub.cfg 2>/dev/null || true
+	# Make sure grub.cfg exists, copy template if missing
 	if [ ! -f iso/boot/grub/grub.cfg ]; then \
-		echo 'set default=0' > iso/boot/grub/grub.cfg && \
-		echo 'set timeout=0' >> iso/boot/grub/grub.cfg && \
-		echo '' >> iso/boot/grub/grub.cfg && \
-		echo 'menuentry "minios" {' >> iso/boot/grub/grub.cfg && \
-		echo '    multiboot /boot/minios.elf' >> iso/boot/grub/grub.cfg && \
-		echo '    boot' >> iso/boot/grub/grub.cfg && \
+		echo 'set timeout=5' > iso/boot/grub/grub.cfg; \
+		echo 'set default=0' >> iso/boot/grub/grub.cfg; \
+		echo 'menuentry "NASM Multiboot2 Kernel" {' >> iso/boot/grub/grub.cfg; \
+		echo '    multiboot2 /boot/minios.elf' >> iso/boot/grub/grub.cfg; \
+		echo '    boot' >> iso/boot/grub/grub.cfg; \
 		echo '}' >> iso/boot/grub/grub.cfg; \
 	fi
-	grub-mkrescue -o minios.iso iso 2>/dev/null || xorriso -as mkisofs -o minios.iso -boot-info-table -boot-load-size 4 -append_partition 2 0xef iso/efiboot.img iso 2>/dev/null || (echo "Trying alternative ISO creation..." && genisoimage -o minios.iso -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 -boot-info-table -r -J iso)
+	grub-mkrescue -o minios.iso iso || \
+	xorriso -as mkisofs -o minios.iso -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 -boot-info-table iso
 
 run: iso
-	qemu-system-x86 -cdrom minios.iso -boot d
+	qemu-system-x86_64 -cdrom minios.iso -boot d
 
 debug: kernel.elf
-	qemu-system-x86 -s -S -kernel kernel.elf &
+	@echo "Starting QEMU in debug mode..."
+	qemu-system-x86_64 -s -S -kernel kernel.elf &
 	qemu_pid=$$!
 	sleep 1
-	gdb -ex "target remote localhost:1234" -ex "break kernel_main" -ex "continue" vmlinux 2>/dev/null || (echo "GDB connection ready on port 1234"; kill $$qemu_pid 2>/dev/null)
+	gdb -ex "target remote localhost:1234" -ex "break kernel_main" -ex "continue" kernel.elf || echo "GDB ready on port 1234"
+	kill $$qemu_pid 2>/dev/null || true
 
 deps:
 	@echo "Checking dependencies..."
@@ -61,4 +69,4 @@ deps:
 clean:
 	rm -f kernel.elf minios.iso
 	rm -f kernel/*.o
-	rm -rf iso/boot/stage2_eltorito iso/boot/grub/boot.img iso/boot/minios.elf
+	rm -rf iso/boot
