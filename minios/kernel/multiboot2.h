@@ -123,7 +123,11 @@ typedef struct {
 } multiboot2_memory_info_t;
 
 void multiboot2_parse_memory(multiboot2_memory_info_t *info, void *mb_info);
-void multiboot2_parse_mmap(void *mb_info);
+void multiboot2_parse_mmap(multiboot2_tag_mmap_t *mmap_result, void *mb_info);
 void *multiboot2_get_tag(void *mb_info, uint32_t type);
+uint32_t multiboot2_get_mmap_entry_count(void *mb_info);
+multiboot2_mmap_entry_t *multiboot2_get_mmap_entry(void *mb_info, uint32_t index);
+const char *multiboot2_get_cmdline(void *mb_info);
+uint32_t multiboot2_get_bootdev(void *mb_info, uint32_t *slice);
 
 #endif
