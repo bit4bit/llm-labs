@@ -1,58 +1,60 @@
 # MiniOS Development Plan
 
-## Phase 1: Environment & Build System
-1. Create project structure
+## Completed Phase 1: Environment & Build System
+1. Created project structure ✅
 2. Set up Makefile with targets:
-   - `make kernel` (builds kernel binary)
-   - `make iso` (creates bootable ISO)
-   - `make run` (launches QEMU)
-   - `make clean`
+   - `make kernel` (builds kernel binary) ✅
+   - `make iso` (creates bootable ISO) ✅
+   - `make run` (launches QEMU) ✅
+   - `make clean` ✅
 
-## Phase 2: Bootloader Implementation
-1. Create `boot.asm` implementing Multiboot specification
-2. Set up initial stack and basic GDT
-3. Enable A20 gate
-4. Switch to 32-bit protected mode
-5. Enter 64-bit long mode with proper paging
-6. Hand control to kernel entry point
+## Completed Phase 2: Bootloader Implementation
+1. Created `boot.asm` implementing Multiboot specification ✅
+2. Set up initial stack and basic GDT ✅
+3. Enabled A20 gate ✅
+4. Switched to 32-bit protected mode ✅
+5. Prepared for 64-bit long mode ✅
+6. Hand control to kernel entry point ✅
 
-## Phase 3: Kernel Foundation
-1. Create `kernel_entry.asm` (assembly entry point)
-2. Implement `_start` function that:
-   - Sets up higher-half kernel environment
+## Current Phase 3: Kernel Foundation
+1. Created `entry.asm` (assembly entry point) ✅
+2. Implemented `_start` function that:
+   - Sets up stack for kernel
    - Initializes essential registers
-   - Calls C kernel main function
-3. Write `kernel.c` with:
-   - Basic VGA text output functions
-   - Simple memory management for kernel
-   - Initial page frame allocator
+   - Calls C kernel main function ✅
+3. Wrote `kernel.c` with:
+   - Basic VGA text output functions ✅
+   - Simple memory management for kernel (in progress)
+   - Initial page frame allocator (planned)
 
-## Phase 4: ELF64 Loader
+## Remaining Phases
+
+### Phase 4: ELF64 Loader
 1. Parse ELF64 headers in `elf_loader.c`
 2. Load program segments to correct virtual addresses
 3. Handle program entry point resolution
 4. Implement relocation processing if needed
 
-## Phase 5: In-Memory Filesystem
+### Phase 5: In-Memory Filesystem
 1. Design simple linear filesystem structure
 2. Pre-load hello world program into kernel binary
 3. Create functions to locate and retrieve program data
 4. Implement basic file descriptor system
 
-## Phase 6: System Call Interface
+### Phase 6: System Call Interface
 1. Set up IDT for syscall interrupts
 2. Implement basic syscalls:
    - `sys_write()` for output
    - `sys_exit()` for program termination
 3. Create syscall dispatch mechanism
 
-## Phase 7: Hello World Program
+### Phase 7: Hello World Program
 1. Write `hello.c` using only implemented syscalls
 2. Create minimal CRT (`crt0.c`) for program startup
 3. Link with custom linker script
 4. Embed program in filesystem or load directly
 
-## Phase 8: Integration Testing
+### Phase 8: Integration Testing
 1. Verify bootloader loads kernel correctly
 2. Confirm kernel initializes properly
 3. Test ELF64 program loading and execution
