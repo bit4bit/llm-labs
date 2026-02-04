@@ -16,7 +16,7 @@
 5. Prepared for 64-bit long mode ✅
 6. Hand control to kernel entry point ✅
 
-## Current Phase 3: Kernel Foundation
+## Completed Phase 3: Kernel Foundation
 1. Created `entry.asm` (assembly entry point) ✅
 2. Implemented `_start` function that:
    - Sets up stack for kernel
@@ -24,8 +24,16 @@
    - Calls C kernel main function ✅
 3. Wrote `kernel.c` with:
    - Basic VGA text output functions ✅
-   - Simple memory management for kernel (in progress)
+   - Simple memory management for kernel ✅
    - Initial page frame allocator (planned)
+4. Created proper header file organization ✅
+
+## Current Focus: 64-bit Mode Implementation
+We're currently working on properly implementing 64-bit mode support, which involves:
+1. Setting up proper page tables
+2. Enabling PAE (Physical Address Extension)
+3. Activating long mode
+4. Transitioning to 64-bit code segments
 
 ## Remaining Phases
 
