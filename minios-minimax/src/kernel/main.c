@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include "memory/memory.h"
+#include "cpu/gdt.h"
+#include "cpu/idt.h"
 
 #define VGA_MEMORY 0xB8000
 #define VGA_WIDTH 80
@@ -61,6 +63,11 @@ void kernel_main(multiboot_info_t* mbd) {
     serial_print("Free frames: ");
     serial_print_uint(pmm_get_free_count());
     serial_print("\n");
+
+    gdt_init();
+    idt_init();
+
+    __asm__ volatile ("sti");
 
     for (int i = 0; message[i] != '\0'; i++) {
         vga[i] = (color << 8) | message[i];
