@@ -20,28 +20,29 @@ schema: spec-driven
 #       - Break tasks into chunks of max 2 hours
 
 context: |
-         ### Workflow
-         * Prioritize code correctness and clarity. Speed and efficiency are secondary priorities unless otherwise specified.
-         * Write short, clear, and concise code.
-         * Use functional paradigms for code organization.
-         * Ask clarifying questions if input is unclear.
-         * Modularize by concern, not by technical layer
-         * One responsibility per module
-         * Low inter-module coupling
-         * Short functions, no overengineering
-         * Apply Four Rules of Simple Design:
-           1. Code works (passes tests)
-           2. Reveals intent
-           3. No duplication
-           4. Minimal elements
-         * Prefer functional style:
-           * Use explicit parameters
-           * Prefer immutability
-           * Prefer declarative over imperative
-           * Minimize state
-         ### Commit Strategy
-          * One prompt = one commit
-          * Each commit:
-            * Self-contained
-            * Includes tests
-            * Uses 50/70 commit message format
+  Always include 'project.md'
+  ### Workflow
+  * Prioritize code correctness and clarity. Speed and efficiency are secondary priorities unless otherwise specified.
+  * Write short, clear, and concise code.
+  * Use functional paradigms for code organization.
+  * Ask clarifying questions if input is unclear.
+  * Modularize by concern, not by technical layer
+  * One responsibility per module
+  * Low inter-module coupling
+  * Short functions, no overengineering
+  * Apply Four Rules of Simple Design:
+    1. Code works (passes tests)
+    2. Reveals intent
+    3. No duplication
+    4. Minimal elements
+  * Prefer functional style:
+    * Use explicit parameters
+    * Prefer immutability
+    * Prefer declarative over imperative
+    * Minimize state
+  ### Commit Strategy
+   * One prompt = one commit
+   * Each commit:
+     * Self-contained
+     * Includes tests
+     * Uses 50/70 commit message format
