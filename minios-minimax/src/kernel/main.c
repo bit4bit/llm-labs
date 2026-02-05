@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "memory/memory.h"
 
 #define VGA_MEMORY 0xB8000
 #define VGA_WIDTH 80
@@ -31,18 +32,53 @@ void serial_print(const char* str) {
     }
 }
 
-void kernel_main(void) {
+void serial_print_uint(uint32_t val) {
+    char buf[12];
+    int i = 0;
+    if (val == 0) {
+        serial_putchar('0');
+        return;
+    }
+    while (val > 0) {
+        buf[i++] = '0' + (val % 10);
+        val /= 10;
+    }
+    while (i--) {
+        serial_putchar(buf[i]);
+    }
+}
+
+void kernel_main(multiboot_info_t* mbd) {
     volatile uint16_t* vga = (volatile uint16_t*)VGA_MEMORY;
     const char* message = "MinOS Loaded";
     uint8_t color = 0x07;
 
     serial_print("Kernel starting...\n");
 
+    pmm_init(mbd);
+    serial_print("PMM initialized\n");
+
+    serial_print("Free frames: ");
+    serial_print_uint(pmm_get_free_count());
+    serial_print("\n");
+
     for (int i = 0; message[i] != '\0'; i++) {
         vga[i] = (color << 8) | message[i];
     }
 
     serial_print("MinOS Loaded\n");
+
+    void* test_frame = pmm_alloc_frame();
+    serial_print("Allocated test frame at: 0x");
+    serial_print_uint((uint32_t)test_frame);
+    serial_print("\n");
+
+    pmm_free_frame(test_frame);
+    serial_print("Freed test frame\n");
+
+    serial_print("Free frames after: ");
+    serial_print_uint(pmm_get_free_count());
+    serial_print("\n");
 
     while (1) {
         __asm__ volatile ("hlt");

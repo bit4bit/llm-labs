@@ -7,7 +7,7 @@ CFLAGS = -m32 -fno-pie -no-pie -ffreestanding -O2 -Wall -Wextra
 ASFLAGS = --32
 LDFLAGS = -T link.ld -nostdlib -m elf_i386
 
-KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o
+KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o src/kernel/memory/alloc.o
 
 .PHONY: all iso qemu clean
 
@@ -23,6 +23,9 @@ src/kernel/boot/boot.o: src/kernel/boot/boot.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
 src/kernel/main.o: src/kernel/main.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/kernel/memory/alloc.o: src/kernel/memory/alloc.c src/kernel/memory/memory.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 iso: kernel.bin iso/boot/grub/grub.cfg

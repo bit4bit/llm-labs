@@ -9,6 +9,8 @@ stack:
 .section .text
 _start:
     mov $stack, %esp
+    mov %ebx, %eax
+    push %eax
     call kernel_main
 hang:
     hlt
