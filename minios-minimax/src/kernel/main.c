@@ -2,6 +2,7 @@
 #include "memory/memory.h"
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
+#include "memory/paging.h"
 
 #define VGA_MEMORY 0xB8000
 #define VGA_WIDTH 80
@@ -66,6 +67,7 @@ void kernel_main(multiboot_info_t* mbd) {
 
     gdt_init();
     idt_init();
+    paging_init();
 
     __asm__ volatile ("sti");
 
