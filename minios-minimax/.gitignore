@@ -1,0 +1,50 @@
+# Compiled files
+*.o
+*.a
+*.so
+*.elf
+*.bin
+*.flat
+*.exe
+
+# Specific build artifacts
+kernel.bin
+kernel.bin.flat
+minios.iso
+boot16.bin
+boot16.elf
+boot16.o
+
+# Generated directories
+iso/
+build/
+dist/
+
+# Dependency files
+*.d
+.depend
+.depend.*
+
+# Editor/IDE files
+*.swp
+*.swo
+*~
+*.bak
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.sublime-*
+
+# QEMU and emulator files
+qemulog.log
+*.img
+
+# Logging and temporary files
+*.log
+*.tmp
+*.temp
+
+# Core dumps
+core
+core.*
