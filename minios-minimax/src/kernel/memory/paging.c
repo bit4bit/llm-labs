@@ -14,8 +14,10 @@ void paging_init(void) {
         page_dir[i] = 0;
     }
 
-    // Set PDE 0: 4MB page at 0x0
-    page_dir[0] = 0x00000083;
+    // Set PDE 0-63: 256MB identity mapping (4MB each)
+    for (int i = 0; i < 64; i++) {
+        page_dir[i] = (i * 0x400000) | 0x83;
+    }
 
     serial_print("Paging: PDE 0 set\n");
 

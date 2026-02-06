@@ -17,6 +17,8 @@ void idt_set_gate(uint8_t num, uint32_t handler) {
     idt_entries[num].offset_high = (handler >> 16) & 0xFFFF;
 }
 
+extern void handle_page_fault(void);
+
 void idt_init(void) {
     serial_print("IDT: Initializing...\n");
 
@@ -26,6 +28,8 @@ void idt_init(void) {
     for (int i = 0; i < IDT_ENTRIES; i++) {
         idt_set_gate(i, (uint32_t)default_handler);
     }
+
+    idt_set_gate(14, (uint32_t)handle_page_fault);
 
     __asm__ volatile ("lidt %0" : : "m"(idt_ptr));
 
