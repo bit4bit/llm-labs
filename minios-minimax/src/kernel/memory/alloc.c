@@ -32,7 +32,7 @@ void pmm_init(multiboot_info_t* mbd) {
     serial_print("\n");
 
     uint32_t bitmap_size = (pmm_frame_count + 7) / 8;
-    pmm_bitmap = (uint8_t*)0x100000;
+    pmm_bitmap = (uint8_t*)0x1000000;
 
     for (uint32_t i = 0; i < bitmap_size; i++) {
         pmm_bitmap[i] = 0;
@@ -41,11 +41,16 @@ void pmm_init(multiboot_info_t* mbd) {
     pmm_used_frames = 0;
 
     multiboot_memory_map_t* mmap = (multiboot_memory_map_t*)mbd->mmap_addr;
-    while ((uint32_t)mmap < mbd->mmap_addr + mbd->mmap_length) {
-        if (mmap->type == 1) {
-            uint32_t addr = mmap->addr_low;
-            uint32_t len = mmap->len_low;
+    uint32_t mmap_end = mbd->mmap_addr + mbd->mmap_length;
 
+    serial_print("PMM: Marking reserved regions...\n");
+
+    while ((uint32_t)mmap < mmap_end) {
+        uint32_t addr = mmap->addr_low;
+        uint32_t len = mmap->len_low;
+        uint32_t type = mmap->type;
+
+        if (type != 1 && len > 0) {
             uint32_t start_frame = addr / PAGE_SIZE;
             uint32_t num_frames = len / PAGE_SIZE;
 

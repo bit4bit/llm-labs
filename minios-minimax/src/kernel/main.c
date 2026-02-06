@@ -5,8 +5,6 @@
 #include "memory/paging.h"
 
 #define VGA_MEMORY 0xB8000
-#define VGA_WIDTH 80
-#define VGA_HEIGHT 25
 #define COM1 0x3F8
 
 static inline uint8_t inb(uint16_t port) {
@@ -19,13 +17,9 @@ static inline void outb(uint16_t port, uint8_t val) {
     __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
-static inline void outb_delay(uint16_t port, uint8_t val) {
-    __asm__ volatile ("outb %0, %1; jmp 1f; 1:" : : "a"(val), "Nd"(port));
-}
-
 void serial_putchar(char c) {
     while (!(inb(COM1 + 5) & 0x20));
-    outb_delay(COM1, c);
+    outb(COM1, c);
 }
 
 void serial_print(const char* str) {
@@ -66,10 +60,12 @@ void kernel_main(multiboot_info_t* mbd) {
     serial_print("\n");
 
     gdt_init();
-    idt_init();
-    paging_init();
+    serial_print("GDT initialized\n");
 
-    __asm__ volatile ("sti");
+    idt_init();
+    serial_print("IDT initialized\n");
+
+    paging_init();
 
     for (int i = 0; message[i] != '\0'; i++) {
         vga[i] = (color << 8) | message[i];

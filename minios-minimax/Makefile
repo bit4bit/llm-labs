@@ -7,7 +7,7 @@ CFLAGS = -m32 -fno-pie -no-pie -ffreestanding -O2 -Wall -Wextra
 ASFLAGS = --32
 LDFLAGS = -T link.ld -nostdlib -m elf_i386
 
-KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o src/kernel/memory/alloc.o src/kernel/memory/paging.o src/kernel/cpu/gdt.o src/kernel/cpu/idt.o src/kernel/cpu/interrupts.o
+KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o src/kernel/memory/alloc.o src/kernel/memory/paging.o src/kernel/memory/page_dir.o src/kernel/memory/enable_paging.o src/kernel/cpu/gdt.o src/kernel/cpu/idt.o src/kernel/cpu/interrupts.o
 
 .PHONY: all iso qemu clean
 
@@ -28,8 +28,14 @@ src/kernel/main.o: src/kernel/main.c
 src/kernel/memory/alloc.o: src/kernel/memory/alloc.c src/kernel/memory/memory.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-src/kernel/memory/paging.o: src/kernel/memory/paging.c src/kernel/memory/paging.h
+src/kernel/memory/paging.o: src/kernel/memory/paging.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/kernel/memory/page_dir.o: src/kernel/memory/page_dir.asm
+	$(AS) $(ASFLAGS) -o $@ $<
+
+src/kernel/memory/enable_paging.o: src/kernel/memory/enable_paging.S
+	$(AS) $(ASFLAGS) -o $@ $<
 
 src/kernel/cpu/gdt.o: src/kernel/cpu/gdt.c src/kernel/cpu/gdt.h
 	$(CC) $(CFLAGS) -c -o $@ $<

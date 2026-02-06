@@ -43,8 +43,6 @@ typedef struct {
     uint32_t base       : 20;
 } __attribute__((packed)) page_table_entry_t;
 
-extern page_directory_entry_t* kernel_directory;
-
 void paging_init(void);
 void enable_paging(void);
 void paging_switch(page_directory_entry_t* dir);
