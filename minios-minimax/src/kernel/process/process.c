@@ -4,10 +4,7 @@
 #include "../cpu/tss.h"
 #include "../cpu/constants.h"
 #include "../cpu/idt.h"
-
-extern void serial_print(const char* str);
-extern void serial_print_uint(uint32_t val);
-extern void serial_print_hex(uint32_t val);
+#include "../debug.h"
 
 process_table_t process_table;
 pcb_t* current_process;
@@ -15,16 +12,16 @@ pcb_t* current_process;
 extern void enter_user_mode(uint32_t entry, uint32_t stack);
 
 void process_init(void) {
-    serial_print("Process: Initializing...\n");
+    DEBUG_PROC("Initializing...");
     process_table.count = 0;
     process_table.next_pid = 1;
     process_table.running = 0xFFFFFFFF;
-    serial_print("Process: Initialized\n");
+    DEBUG_PROC("Initialized");
 }
 
 pcb_t* process_create(const char* name, uint32_t entry_addr) {
     if (process_table.count >= MAX_PROCESSES) {
-        serial_print("Process: Error - max processes reached\n");
+        DEBUG_ERROR("max processes reached");
         return NULL;
     }
 
@@ -44,47 +41,27 @@ pcb_t* process_create(const char* name, uint32_t entry_addr) {
 
     process_table.count++;
 
-    serial_print("Process: Created ");
-    serial_print(pcb->name);
-    serial_print(" with PID ");
-    serial_print_uint(pcb->id);
-    serial_print("\n");
+    DEBUG_PROC("Created %s with PID %u", pcb->name, pcb->id);
 
     return pcb;
 }
 
 int process_load(pcb_t* pcb, const uint8_t* binary, uint32_t size) {
     if (pcb == NULL || binary == NULL || size == 0) {
-        serial_print("Process: Error - invalid load parameters\n");
+        DEBUG_ERROR("invalid load parameters");
         return -1;
     }
 
-    serial_print("Process: Loading ");
-    serial_print(pcb->name);
-    serial_print(" (");
-    serial_print_uint(size);
-    serial_print(" bytes) to 0x");
-    serial_print_hex(pcb->entry);
-    serial_print("...\n");
+    DEBUG_PROC("Loading %s (%u bytes) to 0x%X...", pcb->name, size, pcb->entry);
 
-    /* Copy binary to user space address */
     uint8_t* dest = (uint8_t*)pcb->entry;
     for (uint32_t i = 0; i < size; i++) {
         dest[i] = binary[i];
     }
 
-    serial_print("Process: Binary loaded successfully\n");
+    DEBUG_PROC("Binary loaded successfully");
 
-    /* Verify first few bytes */
-    serial_print("Process: First 4 bytes = 0x");
-    serial_print_hex(dest[0]);
-    serial_print(" 0x");
-    serial_print_hex(dest[1]);
-    serial_print(" 0x");
-    serial_print_hex(dest[2]);
-    serial_print(" 0x");
-    serial_print_hex(dest[3]);
-    serial_print("\n");
+    DEBUG_PROC("First 4 bytes = 0x%X 0x%X 0x%X 0x%X", dest[0], dest[1], dest[2], dest[3]);
 
     return 0;
 }
@@ -94,11 +71,7 @@ pcb_t* process_get_current(void) {
 }
 
 void process_start(pcb_t* pcb) {
-    serial_print("Process: Starting ");
-    serial_print(pcb->name);
-    serial_print(" at 0x");
-    serial_print_hex(pcb->entry);
-    serial_print("\n");
+    DEBUG_PROC("Starting %s at 0x%X", pcb->name, pcb->entry);
 
     current_process = pcb;
 
@@ -106,32 +79,17 @@ void process_start(pcb_t* pcb) {
 
     tss_set_stack(KERNEL_STACK_USER_MODE);
 
-    serial_print("Process: Switching to user mode...\n");
-    serial_print("Process:   entry_point = 0x");
-    serial_print_hex(pcb->entry);
-    serial_print("\n");
-    serial_print("Process:   user_stack = 0x");
-    serial_print_hex(user_stack);
-    serial_print("\n");
-    serial_print("Process:   tss.esp0 = 0x");
-    serial_print_hex(KERNEL_STACK_USER_MODE);
-    serial_print("\n");
+    DEBUG_PROC("Switching to user mode...");
+    DEBUG_PROC("  entry_point = 0x%X", pcb->entry);
+    DEBUG_PROC("  user_stack = 0x%X", user_stack);
+    DEBUG_PROC("  tss.esp0 = 0x%X", KERNEL_STACK_USER_MODE);
     
-    // Verify the code at entry point
     volatile uint8_t* code = (volatile uint8_t*)pcb->entry;
-    serial_print("Process:   code[0..3] = 0x");
-    serial_print_hex(code[0]);
-    serial_print(" 0x");
-    serial_print_hex(code[1]);
-    serial_print(" 0x");
-    serial_print_hex(code[2]);
-    serial_print(" 0x");
-    serial_print_hex(code[3]);
-    serial_print("\n");
+    DEBUG_PROC("  code[0..3] = 0x%X 0x%X 0x%X 0x%X", code[0], code[1], code[2], code[3]);
     
-    serial_print("Process: Calling enter_user_mode()...\n");
+    DEBUG_PROC("Calling enter_user_mode()...");
 
     enter_user_mode(pcb->entry, user_stack);
 
-    serial_print("Process: Returned to kernel\n");
+    DEBUG_PROC("Returned to kernel");
 }

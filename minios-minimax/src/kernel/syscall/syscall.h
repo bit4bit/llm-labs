@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "../serial.h"
 
 #define SYSCALL_EXIT 1
 #define SYSCALL_WRITE 3
