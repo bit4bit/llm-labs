@@ -46,5 +46,6 @@ typedef struct {
 void paging_init(void);
 void enable_paging(void);
 void paging_switch(page_directory_entry_t* dir);
+void paging_test(void);
 
 #endif
