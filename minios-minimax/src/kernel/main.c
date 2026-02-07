@@ -13,9 +13,28 @@
 #define HELLO_ADDR 0x40000000
 
 uint8_t hello_bin[] = {
+    // mov eax, 0xB8000 (VGA text memory address)
+    0xB8, 0x00, 0x80, 0x0B, 0x00,
+    // mov es, eax (can't directly, so we'll skip this for now)
+    // Let's write directly to VGA memory at 0xB8000
+    // mov edi, 0xB8000 (destination)
+    0xBF, 0x00, 0x80, 0x0B, 0x00,
+    // mov esi, msg (source - we'll put message right after code)
+    0xBE, 0x22, 0x00, 0x00, 0x40,  // 0x40000022 (after this code at byte 34)
+    // mov ecx, 22 (11 characters * 2 bytes each)
+    0xB9, 0x16, 0x00, 0x00, 0x00,
+    // rep movsb (copy string to VGA)
+    0xF3, 0xA4,
+    // mov eax, 1 (syscall exit)
     0xB8, 0x01, 0x00, 0x00, 0x00,
+    // mov ebx, 0 (exit code)
     0xBB, 0x00, 0x00, 0x00, 0x00,
-    0xCD, 0x80
+    // int 0x80 (syscall)
+    0xCD, 0x80,
+    // Message data: "hola mundo" with attributes
+    'h', 0x07, 'o', 0x07, 'l', 0x07, 'a', 0x07,
+    ' ', 0x07, 'm', 0x07, 'u', 0x07, 'n', 0x07,
+    'd', 0x07, 'o', 0x07, '!', 0x07
 };
 
 static inline uint8_t inb(uint16_t port) {

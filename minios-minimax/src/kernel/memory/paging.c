@@ -15,12 +15,16 @@ void paging_init(void) {
         page_dir[i] = 0;
     }
 
-    // Set PDE 0-63: 256MB identity mapping (4MB each)
-    for (int i = 0; i < 64; i++) {
+    // Set PDE 0: 0-4MB identity mapping with user access (for VGA at 0xB8000)
+    page_dir[0] = 0x00000000 | 0x87;  // Present | R/W | User | PS
+    
+    // Set PDE 1-63: 4MB-256MB identity mapping (kernel only)
+    for (int i = 1; i < 64; i++) {
         page_dir[i] = (i * 0x400000) | 0x83;
     }
 
-    serial_print("Paging: PDE 0-63 set (kernel, 256MB identity)\n");
+    serial_print("Paging: PDE 0 set (user, 0-4MB for VGA)\n");
+    serial_print("Paging: PDE 1-63 set (kernel, 4-256MB identity)\n");
 
     serial_print("Paging: Enabling...\n");
 
