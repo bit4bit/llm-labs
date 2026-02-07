@@ -36,5 +36,6 @@ void pmm_init(multiboot_info_t* mbd);
 void* pmm_alloc_frame(void);
 void pmm_free_frame(void* addr);
 uint32_t pmm_get_free_count(void);
+void pmm_test(void);
 
 #endif
