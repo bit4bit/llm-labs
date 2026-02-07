@@ -20,6 +20,9 @@ make qemu-simple
 
 # Clean everything
 make clean
+
+# After changing C programs, rebuild:
+make clean && make all
 ```
 
 ## File Structure
@@ -116,6 +119,10 @@ write(1, buffer, length);
 → Run `./tools/test-programs.sh`
 → Check `programs/README.md`
 
+**Changed hello.c but no effect**
+→ Run `make clean && make all`
+→ Incremental builds may miss program changes
+
 ## Test Output
 
 When working correctly, you should see:
@@ -125,6 +132,16 @@ sys_write: output="Hello from C program!
 Syscall: write returned 22
 Syscall: exit called with code 0
 ```
+
+## Important: Rebuilding After Changes
+
+If you modify a C program (`hello.c`), you may need to force a rebuild:
+```bash
+make clean && make all
+```
+
+The Makefile doesn't explicitly track generated C arrays as dependencies,
+so incremental builds might not detect changes. Clean builds always work.
 
 ## Documentation
 

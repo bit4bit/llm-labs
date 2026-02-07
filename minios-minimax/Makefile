@@ -7,7 +7,7 @@ CFLAGS = -m32 -fno-pie -no-pie -ffreestanding -O2 -Wall -Wextra
 ASFLAGS = --32
 LDFLAGS = -T link.ld -nostdlib -m elf_i386
 
-KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o src/kernel/memory/alloc.o src/kernel/memory/paging.o src/kernel/memory/page_dir.o src/kernel/memory/enable_paging.o src/kernel/cpu/gdt.o src/kernel/cpu/idt.o src/kernel/cpu/interrupts.o src/kernel/cpu/tss.o src/kernel/syscall/syscall.o src/kernel/syscall/syscall_asm.o src/kernel/process/process.o src/kernel/process/trampoline.o
+KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o src/kernel/programs.o src/kernel/memory/alloc.o src/kernel/memory/paging.o src/kernel/memory/page_dir.o src/kernel/memory/enable_paging.o src/kernel/cpu/gdt.o src/kernel/cpu/idt.o src/kernel/cpu/interrupts.o src/kernel/cpu/tss.o src/kernel/syscall/syscall.o src/kernel/syscall/syscall_asm.o src/kernel/process/process.o src/kernel/process/trampoline.o
 
 .PHONY: all iso qemu qemu-test qemu-simple qemu-debug qemu-int qemu-vga help clean programs programs-clean programs-generated
 
@@ -54,7 +54,7 @@ programs-generated:
 programs-clean:
 	$(MAKE) -C programs clean
 
-kernel.bin: programs/generated/hello_bin.c $(KERNEL_OBJS) link.ld
+kernel.bin: $(KERNEL_OBJS) link.ld
 	$(LD) $(LDFLAGS) -o $@ $(KERNEL_OBJS)
 
 src/kernel/boot/multiboot.o: src/kernel/boot/multiboot.S
@@ -63,7 +63,10 @@ src/kernel/boot/multiboot.o: src/kernel/boot/multiboot.S
 src/kernel/boot/boot.o: src/kernel/boot/boot.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
-src/kernel/main.o: src/kernel/main.c programs/generated/hello_bin.c
+src/kernel/main.o: src/kernel/main.c src/kernel/programs.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/kernel/programs.o: src/kernel/programs.c src/kernel/programs.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 src/kernel/memory/alloc.o: src/kernel/memory/alloc.c src/kernel/memory/memory.h

@@ -165,8 +165,8 @@ Syscall: exit called with code 0
 - `tools/test-programs.sh`
 - `C_PROGRAMS_SETUP.md`
 
-### Files Modified (3 files)
-- `Makefile` - Added program build targets
+### Files Modified (4 files)
+- `Makefile` - Added program build targets (no explicit hello_bin.c dependency)
 - `src/kernel/process/process.h` - Added `process_load()` declaration
 - `src/kernel/process/process.c` - Added `process_load()` implementation
 - `src/kernel/main.c` - Replaced hardcoded assembly with C program include
@@ -256,8 +256,22 @@ Syscall: exit called with code 0
 3. **Single program**: Only one program embedded currently
 4. **No arguments**: Can't pass command-line args yet
 5. **No environment**: No env variables
+6. **Incremental builds**: Changes to C programs may require `make clean` for full rebuild
 
 These are acceptable for MVP and can be addressed incrementally.
+
+### Note on Build Dependencies
+
+The Makefile doesn't explicitly track `hello_bin.c` as a dependency of `main.o`. This means:
+- **Clean builds always work**: `make clean && make all` is reliable
+- **Incremental builds**: If you modify `hello.c`, run `make clean` or `rm src/kernel/main.o` to force rebuild
+- **Trade-off**: Simpler Makefile, easier to add programs, but manual clean needed for changes
+
+To force a full rebuild after changing programs:
+```bash
+make clean
+make all
+```
 
 ## Validation
 
