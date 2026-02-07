@@ -2,13 +2,12 @@
 #define PROCESS_H
 
 #include <stdint.h>
+#include "../minios.h"
 
 #define MAX_PROCESSES 4
 
 #define PROC_RUNNING 0
 #define PROC_EXITED  1
-
-#define HELLO_ADDR 0x40000000
 
 typedef struct {
     uint32_t id;

@@ -2,6 +2,7 @@
 #include "gdt.h"
 #include "constants.h"
 #include "../kernel.h"
+#include "../minios.h"
 
 #define GDT_DESC_TYPE_TSS 0x89  /* Available 32-bit TSS */
 
@@ -18,7 +19,7 @@ void tss_init(void) {
     serial_print("\n");
 
     tss_entry.ss0 = KERNEL_DATA_SELECTOR;
-    tss_entry.esp0 = 0xBFFFF000;
+    tss_entry.esp0 = KERNEL_STACK_USER_MODE;
     tss_entry.cr3 = 0;
     tss_entry.eip = 0;
     tss_entry.eflags = 0;

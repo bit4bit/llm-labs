@@ -1,5 +1,6 @@
 #include "process.h"
 #include "../kernel.h"
+#include "../minios.h"
 #include "../cpu/tss.h"
 #include "../cpu/constants.h"
 #include "../cpu/idt.h"
@@ -63,9 +64,9 @@ void process_start(pcb_t* pcb) {
 
     current_process = pcb;
 
-    uint32_t user_stack = 0xBFFFF000 - 4096;
+    uint32_t user_stack = USER_STACK_INITIAL;
 
-    tss_set_stack(0xBFFFF000);
+    tss_set_stack(KERNEL_STACK_USER_MODE);
 
     serial_print("Process: Switching to user mode...\n");
     serial_print("Process:   entry_point = 0x");
@@ -75,7 +76,7 @@ void process_start(pcb_t* pcb) {
     serial_print_hex(user_stack);
     serial_print("\n");
     serial_print("Process:   tss.esp0 = 0x");
-    serial_print_hex(0xBFFFF000);
+    serial_print_hex(KERNEL_STACK_USER_MODE);
     serial_print("\n");
     
     // Verify the code at entry point

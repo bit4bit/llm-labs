@@ -2,18 +2,11 @@
 #define PAGING_H
 
 #include <stdint.h>
+#include "../minios.h"
 
 #define PAGE_SIZE           4096
 #define PAGE_ALIGN          0x1000
 #define PAGE_SHIFT          12
-
-#define PDE_PRESENT         0x01
-#define PDE_RW              0x02
-#define PDE_USER            0x04
-#define PDE_PS              0x80
-
-#define KERNEL_VIRTUAL_BASE 0xC0000000
-#define KERNEL_PAGE_SIZE    0x400000
 
 typedef struct {
     uint32_t present    : 1;

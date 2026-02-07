@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "kernel.h"
+#include "minios.h"
 #include "memory/memory.h"
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
@@ -7,10 +8,6 @@
 #include "memory/paging.h"
 #include "process/process.h"
 #include "syscall/syscall.h"
-
-#define VGA_MEMORY 0xB8000
-#define COM1 0x3F8
-#define HELLO_ADDR 0x40000000
 
 uint8_t hello_bin[] = {
     // mov eax, 0xB8000 (VGA text memory address)
@@ -48,8 +45,8 @@ static inline void outb(uint16_t port, uint8_t val) {
 }
 
 void serial_putchar(char c) {
-    while (!(inb(COM1 + 5) & 0x20));
-    outb(COM1, c);
+    while (!(inb(COM1_PORT + 5) & 0x20));
+    outb(COM1_PORT, c);
 }
 
 void serial_print(const char* str) {
@@ -152,9 +149,9 @@ void kernel_main(multiboot_info_t* mbd) {
     tss_init();
     process_init();
 
-    /* Test write/read at 0x40000000 before copying */
-    serial_print("Testing memory at 0x40000000...\n");
-    volatile uint32_t* test_ptr = (volatile uint32_t*)0x40000000;
+    /* Test write/read at USER_PROGRAM_BASE before copying */
+    serial_print("Testing memory at user program base...\n");
+    volatile uint32_t* test_ptr = (volatile uint32_t*)USER_PROGRAM_BASE;
     
     serial_print("Test: Reading initial value...\n");
     uint32_t initial_val = *test_ptr;
@@ -177,14 +174,14 @@ void kernel_main(multiboot_info_t* mbd) {
         serial_print("Test: FAILED - memory not working!\n");
     }
     
-    /* Copy hello_bin to user space at HELLO_ADDR */
+    /* Copy hello_bin to user space at USER_PROGRAM_BASE */
     serial_print("Copying hello_bin (");
     serial_print_uint(sizeof(hello_bin));
     serial_print(" bytes) to 0x");
-    serial_print_hex(HELLO_ADDR);
+    serial_print_hex(USER_PROGRAM_BASE);
     serial_print("...\n");
     
-    uint8_t* dest = (uint8_t*)HELLO_ADDR;
+    uint8_t* dest = (uint8_t*)USER_PROGRAM_BASE;
     for (uint32_t i = 0; i < sizeof(hello_bin); i++) {
         dest[i] = hello_bin[i];
     }
@@ -193,7 +190,7 @@ void kernel_main(multiboot_info_t* mbd) {
     
     /* Verify first few bytes */
     serial_print("Verifying: first 4 bytes at 0x");
-    serial_print_hex(HELLO_ADDR);
+    serial_print_hex(USER_PROGRAM_BASE);
     serial_print(" = 0x");
     serial_print_hex(dest[0]);
     serial_print(" 0x");
@@ -205,7 +202,7 @@ void kernel_main(multiboot_info_t* mbd) {
     serial_print("\n");
 
     /* Create hello process */
-    pcb_t* hello = process_create("hello", HELLO_ADDR);
+    pcb_t* hello = process_create("hello", USER_PROGRAM_BASE);
     if (hello == NULL) {
         serial_print("Error: Could not create hello process\n");
         while (1) __asm__ volatile ("hlt");

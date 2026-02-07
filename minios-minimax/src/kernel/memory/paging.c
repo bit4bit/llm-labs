@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "../minios.h"
 
 void serial_putchar(char c);
 void serial_print(const char* str);
@@ -16,11 +17,11 @@ void paging_init(void) {
     }
 
     // Set PDE 0: 0-4MB identity mapping with user access (for VGA at 0xB8000)
-    page_dir[0] = 0x00000000 | 0x87;  // Present | R/W | User | PS
+    page_dir[PDE_LOW_MEMORY] = PHYS_LOW_MEMORY_START | PDE_USER_4MB;
     
     // Set PDE 1-63: 4MB-256MB identity mapping (kernel only)
-    for (int i = 1; i < 64; i++) {
-        page_dir[i] = (i * 0x400000) | 0x83;
+    for (int i = PDE_KERNEL_START; i <= PDE_KERNEL_END; i++) {
+        page_dir[i] = (i * PAGE_SIZE_4MB) | PDE_KERNEL_4MB;
     }
 
     serial_print("Paging: PDE 0 set (user, 0-4MB for VGA)\n");
@@ -33,27 +34,29 @@ void paging_init(void) {
 
     serial_print("Paging: Enabled!\n");
 
-    // Map 0x40000000 (1GB) for user process (PDE 256) AFTER paging is enabled
-    // But we need to map it to a physical address that exists!
-    // Let's use physical address 0x01000000 (16MB) instead
-    // Virtual 0x40000000 -> Physical 0x01000000
-    // Flags: 0x87 = Present | R/W | User | PS (4MB page)
+    // Map user program virtual address space (1GB) for user process AFTER paging is enabled
+    // Virtual USER_PROGRAM_BASE -> Physical USER_PROGRAM_PHYS
+    // Flags: Present | R/W | User | PS (4MB page)
     
-    serial_print("Paging: Mapping virtual 0x40000000 to physical 0x01000000...\n");
-    page_dir[256] = 0x01000000 | 0x87;
+    serial_print("Paging: Mapping user program virtual to physical...\n");
+    page_dir[PDE_USER_PROGRAM] = USER_PROGRAM_PHYS | PDE_USER_4MB;
     
-    serial_print("Paging: PDE 256 value = 0x");
-    serial_print_uint(page_dir[256]);
+    serial_print("Paging: PDE ");
+    serial_print_uint(PDE_USER_PROGRAM);
+    serial_print(" value = 0x");
+    serial_print_uint(page_dir[PDE_USER_PROGRAM]);
     serial_print("\n");
 
-    // Map user stack region at 0xBFFFF000 (PDE 767)
-    // Virtual 0xBFC00000 -> Physical 0x02000000 (32MB)
-    // Flags: 0x87 = Present | R/W | User | PS (4MB page)
-    serial_print("Paging: Mapping user stack region 0xBFC00000 to physical 0x02000000...\n");
-    page_dir[767] = 0x02000000 | 0x87;
+    // Map user stack region (PDE 767)
+    // Virtual USER_STACK_REGION_BASE -> Physical USER_STACK_REGION_PHYS
+    // Flags: Present | R/W | User | PS (4MB page)
+    serial_print("Paging: Mapping user stack region...\n");
+    page_dir[PDE_USER_STACK] = USER_STACK_REGION_PHYS | PDE_USER_4MB;
     
-    serial_print("Paging: PDE 767 value = 0x");
-    serial_print_uint(page_dir[767]);
+    serial_print("Paging: PDE ");
+    serial_print_uint(PDE_USER_STACK);
+    serial_print(" value = 0x");
+    serial_print_uint(page_dir[PDE_USER_STACK]);
     serial_print("\n");
 
     // Flush TLB by reloading CR3
@@ -269,8 +272,8 @@ void paging_extended_test(void) {
 
     serial_print("Paging: Running extended self-tests...\n");
 
-    serial_print("Paging: Verifying PDE consistency (0-63)...\n");
-    for (int i = 0; i < 64; i++) {
+    serial_print("Paging: Verifying PDE consistency (kernel range)...\n");
+    for (int i = PDE_LOW_MEMORY; i <= PDE_KERNEL_END; i++) {
         uint32_t pde = page_dir[i];
 
         if ((pde & 0x00000001) != 0x00000001) {
@@ -294,7 +297,7 @@ void paging_extended_test(void) {
             return;
         }
 
-        uint32_t expected_base = (i * 0x400000) & 0xFFC00000;
+        uint32_t expected_base = (i * PAGE_SIZE_4MB) & 0xFFC00000;
         uint32_t actual_base = pde & 0xFFC00000;
         if (expected_base != actual_base) {
             serial_print("Paging: FAILED - PDE ");
@@ -307,10 +310,10 @@ void paging_extended_test(void) {
             return;
         }
     }
-    serial_print("Paging: PDE 0-63 consistency verified\n");
+    serial_print("Paging: PDE kernel range consistency verified\n");
 
     serial_print("Paging: Testing PDE alignment...\n");
-    for (int i = 0; i < 64; i++) {
+    for (int i = PDE_LOW_MEMORY; i <= PDE_KERNEL_END; i++) {
         uint32_t pde = page_dir[i];
         uint32_t base = (pde >> 22) & 0x3FF;
         if (base != (uint32_t)i) {
@@ -358,7 +361,7 @@ void paging_extended_test(void) {
     serial_print("\n");
 
     serial_print("Paging: Verifying upper memory is unmapped (>256MB)...\n");
-    uint32_t upper_pde_idx = 0x10000000 / 0x400000;
+    uint32_t upper_pde_idx = 0x10000000 / PAGE_SIZE_4MB;
     if (upper_pde_idx >= 1024 || page_dir[upper_pde_idx] == 0) {
         serial_print("Paging: Upper memory region (>256MB) correctly unmapped\n");
     } else {
