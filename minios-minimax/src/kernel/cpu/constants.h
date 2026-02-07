@@ -21,6 +21,9 @@
 /* IDT Descriptor flags - stored in access byte */
 #define IDT_DESC_PRESENT       0x80    /* Entry is present in memory */
 #define IDT_DESC_DPL0          0x00    /* Ring 0 only */
+#define IDT_DESC_DPL3          0x60    /* Ring 3 allowed (for syscalls) */
 #define IDT_DESC_TYPE_INTERRUPT 0x0E   /* 32-bit interrupt gate */
+#define IDT_DESC_TYPE_TRAP     0x0F   /* 32-bit trap gate */
+#define IDT_DESC_TYPE_INT_DPL3  (IDT_DESC_PRESENT | IDT_DESC_DPL3 | IDT_DESC_TYPE_INTERRUPT)  /* User-callable interrupt gate (0xEE) */
 
 #endif

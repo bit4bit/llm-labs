@@ -7,7 +7,7 @@ CFLAGS = -m32 -fno-pie -no-pie -ffreestanding -O2 -Wall -Wextra
 ASFLAGS = --32
 LDFLAGS = -T link.ld -nostdlib -m elf_i386
 
-KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o src/kernel/memory/alloc.o src/kernel/memory/paging.o src/kernel/memory/page_dir.o src/kernel/memory/enable_paging.o src/kernel/cpu/gdt.o src/kernel/cpu/idt.o src/kernel/cpu/interrupts.o
+KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o src/kernel/memory/alloc.o src/kernel/memory/paging.o src/kernel/memory/page_dir.o src/kernel/memory/enable_paging.o src/kernel/cpu/gdt.o src/kernel/cpu/idt.o src/kernel/cpu/interrupts.o src/kernel/cpu/tss.o src/kernel/syscall/syscall.o src/kernel/syscall/syscall_asm.o src/kernel/process/process.o src/kernel/process/trampoline.o
 
 .PHONY: all iso qemu clean
 
@@ -45,6 +45,21 @@ src/kernel/cpu/idt.o: src/kernel/cpu/idt.c src/kernel/cpu/idt.h
 
 src/kernel/cpu/interrupts.o: src/kernel/cpu/interrupts.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/kernel/cpu/tss.o: src/kernel/cpu/tss.c src/kernel/cpu/tss.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/kernel/syscall/syscall.o: src/kernel/syscall/syscall.c src/kernel/syscall/syscall.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/kernel/syscall/syscall_asm.o: src/kernel/syscall/syscall_asm.S
+	$(AS) $(ASFLAGS) -o $@ $<
+
+src/kernel/process/process.o: src/kernel/process/process.c src/kernel/process/process.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/kernel/process/trampoline.o: src/kernel/process/trampoline.S
+	$(AS) $(ASFLAGS) -o $@ $<
 
 iso: kernel.bin iso/boot/grub/grub.cfg
 	mkdir -p iso/boot/grub

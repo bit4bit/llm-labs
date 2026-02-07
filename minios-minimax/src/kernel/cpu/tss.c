@@ -3,14 +3,19 @@
 #include "constants.h"
 #include "../kernel.h"
 
-#define GDT_DESC_TYPE_TSS 0x09
+#define GDT_DESC_TYPE_TSS 0x89  /* Available 32-bit TSS */
 
 extern void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
+extern void serial_print_hex(uint32_t val);
 
 struct tss_entry tss_entry;
 
 void tss_init(void) {
     serial_print("TSS: Initializing...\n");
+
+    serial_print("TSS: Setting up TSS entry at 0x");
+    serial_print_hex((uint32_t)&tss_entry);
+    serial_print("\n");
 
     tss_entry.ss0 = KERNEL_DATA_SELECTOR;
     tss_entry.esp0 = 0xBFFFF000;
@@ -35,8 +40,29 @@ void tss_init(void) {
     tss_entry.trap = 0;
     tss_entry.iomap_base = sizeof(struct tss_entry);
 
-    gdt_set_gate(5, (uint32_t)&tss_entry, sizeof(tss_entry) - 1,
-                 GDT_DESC_PRESENT | GDT_DESC_TYPE_TSS, 0);
+    uint32_t tss_base = (uint32_t)&tss_entry;
+    uint32_t tss_limit = sizeof(tss_entry) - 1;
+    uint8_t tss_access = GDT_DESC_PRESENT | GDT_DESC_TYPE_TSS;
+
+    serial_print("TSS: Configuring GDT entry 5...\n");
+    serial_print("TSS:   base=0x");
+    serial_print_hex(tss_base);
+    serial_print("\n");
+    serial_print("TSS:   limit=0x");
+    serial_print_hex(tss_limit);
+    serial_print("\n");
+    serial_print("TSS:   access=0x");
+    serial_print_hex(tss_access);
+    serial_print("\n");
+    serial_print("TSS:   selector=0x");
+    serial_print_hex(TSS_SELECTOR);
+    serial_print("\n");
+
+    gdt_set_gate(5, tss_base, tss_limit, tss_access, 0);
+
+    serial_print("TSS: Loading TR with selector 0x");
+    serial_print_hex(TSS_SELECTOR);
+    serial_print("...\n");
 
     __asm__ volatile ("ltr %0" : : "r"((uint16_t)TSS_SELECTOR));
 

@@ -1,11 +1,22 @@
 #include <stdint.h>
+#include "kernel.h"
 #include "memory/memory.h"
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
+#include "cpu/tss.h"
 #include "memory/paging.h"
+#include "process/process.h"
+#include "syscall/syscall.h"
 
 #define VGA_MEMORY 0xB8000
 #define COM1 0x3F8
+#define HELLO_ADDR 0x40000000
+
+uint8_t hello_bin[] = {
+    0xB8, 0x01, 0x00, 0x00, 0x00,
+    0xBB, 0x00, 0x00, 0x00, 0x00,
+    0xCD, 0x80
+};
 
 static inline uint8_t inb(uint16_t port) {
     uint8_t val;
@@ -45,6 +56,36 @@ void serial_print_uint(uint32_t val) {
     }
 }
 
+void serial_print_hex(uint32_t val) {
+    const char hex_chars[] = "0123456789ABCDEF";
+    char buf[9];
+    int i = 7;
+    
+    buf[8] = '\0';
+    
+    if (val == 0) {
+        serial_putchar('0');
+        return;
+    }
+    
+    while (i >= 0) {
+        buf[i] = hex_chars[val & 0xF];
+        val >>= 4;
+        i--;
+    }
+    
+    // Skip leading zeros
+    i = 0;
+    while (i < 8 && buf[i] == '0') {
+        i++;
+    }
+    
+    // Print remaining digits
+    while (i < 8) {
+        serial_putchar(buf[i++]);
+    }
+}
+
 void kernel_main(multiboot_info_t* mbd) {
     volatile uint16_t* vga = (volatile uint16_t*)VGA_MEMORY;
     const char* message = "MinOS Loaded";
@@ -78,7 +119,7 @@ void kernel_main(multiboot_info_t* mbd) {
 
     void* test_frame = pmm_alloc_frame();
     serial_print("Allocated test frame at: 0x");
-    serial_print_uint((uint32_t)test_frame);
+    serial_print_hex((uint32_t)test_frame);
     serial_print("\n");
 
     pmm_free_frame(test_frame);
@@ -88,6 +129,75 @@ void kernel_main(multiboot_info_t* mbd) {
     serial_print_uint(pmm_get_free_count());
     serial_print("\n");
 
+    /* Process management initialization */
+    tss_init();
+    process_init();
+
+    /* Test write/read at 0x40000000 before copying */
+    serial_print("Testing memory at 0x40000000...\n");
+    volatile uint32_t* test_ptr = (volatile uint32_t*)0x40000000;
+    
+    serial_print("Test: Reading initial value...\n");
+    uint32_t initial_val = *test_ptr;
+    serial_print("Test: Initial value = 0x");
+    serial_print_hex(initial_val);
+    serial_print("\n");
+    
+    serial_print("Test: Writing 0xDEADBEEF...\n");
+    *test_ptr = 0xDEADBEEF;
+    
+    serial_print("Test: Reading back...\n");
+    uint32_t read_val = *test_ptr;
+    serial_print("Test: Read value = 0x");
+    serial_print_hex(read_val);
+    serial_print("\n");
+    
+    if (read_val == 0xDEADBEEF) {
+        serial_print("Test: Write/read OK!\n");
+    } else {
+        serial_print("Test: FAILED - memory not working!\n");
+    }
+    
+    /* Copy hello_bin to user space at HELLO_ADDR */
+    serial_print("Copying hello_bin (");
+    serial_print_uint(sizeof(hello_bin));
+    serial_print(" bytes) to 0x");
+    serial_print_hex(HELLO_ADDR);
+    serial_print("...\n");
+    
+    uint8_t* dest = (uint8_t*)HELLO_ADDR;
+    for (uint32_t i = 0; i < sizeof(hello_bin); i++) {
+        dest[i] = hello_bin[i];
+    }
+    
+    serial_print("hello_bin copied successfully\n");
+    
+    /* Verify first few bytes */
+    serial_print("Verifying: first 4 bytes at 0x");
+    serial_print_hex(HELLO_ADDR);
+    serial_print(" = 0x");
+    serial_print_hex(dest[0]);
+    serial_print(" 0x");
+    serial_print_hex(dest[1]);
+    serial_print(" 0x");
+    serial_print_hex(dest[2]);
+    serial_print(" 0x");
+    serial_print_hex(dest[3]);
+    serial_print("\n");
+
+    /* Create hello process */
+    pcb_t* hello = process_create("hello", HELLO_ADDR);
+    if (hello == NULL) {
+        serial_print("Error: Could not create hello process\n");
+        while (1) __asm__ volatile ("hlt");
+    }
+
+    /* Start hello process in user mode */
+    serial_print("About to call process_start...\n");
+    process_start(hello);
+
+    /* This should never be reached if process_start works correctly */
+    serial_print("Error: process_start returned unexpectedly\n");
     while (1) {
         __asm__ volatile ("hlt");
     }

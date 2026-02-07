@@ -20,7 +20,7 @@ void paging_init(void) {
         page_dir[i] = (i * 0x400000) | 0x83;
     }
 
-    serial_print("Paging: PDE 0 set\n");
+    serial_print("Paging: PDE 0-63 set (kernel, 256MB identity)\n");
 
     serial_print("Paging: Enabling...\n");
 
@@ -28,6 +28,38 @@ void paging_init(void) {
     enable_paging_dir();
 
     serial_print("Paging: Enabled!\n");
+
+    // Map 0x40000000 (1GB) for user process (PDE 256) AFTER paging is enabled
+    // But we need to map it to a physical address that exists!
+    // Let's use physical address 0x01000000 (16MB) instead
+    // Virtual 0x40000000 -> Physical 0x01000000
+    // Flags: 0x87 = Present | R/W | User | PS (4MB page)
+    
+    serial_print("Paging: Mapping virtual 0x40000000 to physical 0x01000000...\n");
+    page_dir[256] = 0x01000000 | 0x87;
+    
+    serial_print("Paging: PDE 256 value = 0x");
+    serial_print_uint(page_dir[256]);
+    serial_print("\n");
+
+    // Map user stack region at 0xBFFFF000 (PDE 767)
+    // Virtual 0xBFC00000 -> Physical 0x02000000 (32MB)
+    // Flags: 0x87 = Present | R/W | User | PS (4MB page)
+    serial_print("Paging: Mapping user stack region 0xBFC00000 to physical 0x02000000...\n");
+    page_dir[767] = 0x02000000 | 0x87;
+    
+    serial_print("Paging: PDE 767 value = 0x");
+    serial_print_uint(page_dir[767]);
+    serial_print("\n");
+
+    // Flush TLB by reloading CR3
+    serial_print("Paging: Flushing TLB...\n");
+    __asm__ volatile (
+        "movl %%cr3, %%eax\n"
+        "movl %%eax, %%cr3\n"
+        : : : "eax", "memory"
+    );
+    serial_print("Paging: TLB flushed\n");
 }
 
 static inline uint32_t get_cr0(void) {

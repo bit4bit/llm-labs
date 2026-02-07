@@ -4,6 +4,8 @@
 #include "../cpu/constants.h"
 #include "../cpu/idt.h"
 
+extern void serial_print_hex(uint32_t val);
+
 process_table_t process_table;
 pcb_t* current_process;
 
@@ -56,7 +58,7 @@ void process_start(pcb_t* pcb) {
     serial_print("Process: Starting ");
     serial_print(pcb->name);
     serial_print(" at 0x");
-    serial_print_uint(pcb->entry);
+    serial_print_hex(pcb->entry);
     serial_print("\n");
 
     current_process = pcb;
@@ -66,6 +68,29 @@ void process_start(pcb_t* pcb) {
     tss_set_stack(0xBFFFF000);
 
     serial_print("Process: Switching to user mode...\n");
+    serial_print("Process:   entry_point = 0x");
+    serial_print_hex(pcb->entry);
+    serial_print("\n");
+    serial_print("Process:   user_stack = 0x");
+    serial_print_hex(user_stack);
+    serial_print("\n");
+    serial_print("Process:   tss.esp0 = 0x");
+    serial_print_hex(0xBFFFF000);
+    serial_print("\n");
+    
+    // Verify the code at entry point
+    volatile uint8_t* code = (volatile uint8_t*)pcb->entry;
+    serial_print("Process:   code[0..3] = 0x");
+    serial_print_hex(code[0]);
+    serial_print(" 0x");
+    serial_print_hex(code[1]);
+    serial_print(" 0x");
+    serial_print_hex(code[2]);
+    serial_print(" 0x");
+    serial_print_hex(code[3]);
+    serial_print("\n");
+    
+    serial_print("Process: Calling enter_user_mode()...\n");
 
     enter_user_mode(pcb->entry, user_stack);
 

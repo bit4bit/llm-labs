@@ -5,7 +5,7 @@
 struct gdt_entry gdt_entries[GDT_ENTRIES];
 struct gdt_ptr gdt_ptr;
 
-static void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
+void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
     gdt_entries[num].base_low = (base & 0xFFFF);
     gdt_entries[num].base_middle = (base >> 16) & 0xFF;
     gdt_entries[num].base_high = (base >> 24) & 0xFF;
@@ -26,8 +26,8 @@ void gdt_init(void) {
     gdt_set_gate(0, 0, 0, 0, 0);
     gdt_set_gate(1, 0, GDT_LIMIT_4GB, GDT_DESC_TYPE_CODE, GDT_DESC_GRANULARITY);
     gdt_set_gate(2, 0, GDT_LIMIT_4GB, GDT_DESC_TYPE_DATA, GDT_DESC_GRANULARITY);
-    gdt_set_gate(3, 0, GDT_LIMIT_4GB, GDT_DESC_PRESENT | GDT_DESC_DPL3 | 0x1A, GDT_DESC_GRANULARITY);
-    gdt_set_gate(4, 0, GDT_LIMIT_4GB, GDT_DESC_PRESENT | GDT_DESC_DPL3 | 0x12, GDT_DESC_GRANULARITY);
+    gdt_set_gate(3, 0, GDT_LIMIT_4GB, GDT_DESC_PRESENT | GDT_DESC_DPL3 | 0x1B, GDT_DESC_GRANULARITY);  /* User code: Present, DPL=3, Code, Executable, Readable, Accessed */
+    gdt_set_gate(4, 0, GDT_LIMIT_4GB, GDT_DESC_PRESENT | GDT_DESC_DPL3 | 0x13, GDT_DESC_GRANULARITY);  /* User data: Present, DPL=3, Data, Writable, Accessed */
 
     __asm__ volatile ("lgdt %0" : : "m"(gdt_ptr));
 

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define GDT_ENTRIES 5
+#define GDT_ENTRIES 6
 
 struct gdt_entry {
     uint16_t limit_low;
@@ -23,5 +23,6 @@ extern struct gdt_ptr gdt_ptr;
 extern struct gdt_entry gdt_entries[GDT_ENTRIES];
 
 void gdt_init(void);
+void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 
 #endif
