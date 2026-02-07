@@ -2,94 +2,112 @@
 
 - [x] 1.1 Create `src/kernel/cpu/tss.h` with TSS structure definition
 - [x] 1.2 Create `src/kernel/cpu/tss.c` with `tss_init()` function
-- [x] 1.3 Add TSS entry to GDT in `gdt.c`
-- [x] 1.4 Load TSS with `ltr` instruction after GDT init
-- [x] 1.5 Verify TSS setup prints via serial
+- [x] 1.3 Add TSS entry to GDT (entry 5)
+- [x] 1.4 Load TSS with `ltr` instruction
+- [x] 1.5 TSS initialized and loaded successfully
 
 ## 2. Process Core: Data Structures
 
-- [x] 2.1 Create `src/kernel/process/process.h` with PCB struct (pid, state, entry, eip)
-- [x] 2.2 Define process states (PROC_RUNNING, PROC_EXITED) in process.h
-- [x] 2.3 Define MAX_PROCESSES (4) and process_table_t struct in process.h
-- [x] 2.4 Declare global `process_table_t` and `current_process` in process.c
-- [x] 2.5 Create `process.h` header with all public function declarations
+- [x] 2.1 Create `src/kernel/process/process.h` with PCB struct
+- [x] 2.2 Define process states (PROC_RUNNING, PROC_EXITED)
+- [x] 2.3 Define MAX_PROCESSES (4) and process_table_t struct
+- [x] 2.4 Declare global `process_table_t` and `current_process`
+- [x] 2.5 All function declarations in process.h
 
 ## 3. Process Core: Functions
 
-- [x] 3.1 Implement `process_init()` - initializes table, sets count=0, next_pid=1
-- [x] 3.2 Implement `process_create(name, entry)` - allocates PCB, sets fields, returns PCB*
-- [x] 3.3 Implement `process_start(pcb)` - sets up user stack, far jump to user mode
-- [x] 3.4 Implement `process_get_current()` - returns pointer to running process
-- [x] 3.5 Add bounds checking in `process_create` for MAX_PROCESSES limit
+- [x] 3.1 Implement `process_init()` - initializes table
+- [x] 3.2 Implement `process_create(name, entry)` - allocates PCB
+- [x] 3.3 Implement `process_start(pcb)` - calls enter_user_mode
+- [x] 3.4 Implement `process_get_current()` - returns current_process
+- [x] 3.5 Bounds checking in `process_create` for MAX_PROCESSES
 
 ## 4. Syscall Infrastructure
 
-- [x] 4.1 Add syscall dispatch table entry for syscall 1 (exit) in syscall.c
-- [x] 4.2 Implement `sys_exit()` function - saves eip to current PCB, sets state=EXITED
-- [x] 4.3 Add syscall number constants to `src/kernel/syscall/syscall.h`
-- [x] 4.4 Verify int 0x80 handler correctly dispatches to sys_exit
+- [x] 4.1 Create `src/kernel/syscall/syscall.h` with syscall numbers
+- [x] 4.2 Implement `syscall_handler()` in syscall.c
+- [x] 4.3 Implement `syscall_asm.S` entry point
+- [x] 4.4 IDT gate 0x80 configured for syscall (BUG: flags=0x238 instead of 0xEE)
 
-## 5. Hello Program: Embedded Binary
+## 5. Hello Program
 
-- [x] 5.1 Create `programs/hello/hello.asm` with assembly that prints "hola mundo" and exits
-- [x] 5.2 Hello binary embedded as byte array in main.c
-- [x] 5.3 Define HELLO_ADDR (0x40000000) constant
-- [x] 5.4 Hello binary writes directly to VGA memory (0xB8000)
+- [x] 5.1 hello_bin defined in main.c (syscall exit only)
+- [x] 5.2 HELLO_ADDR defined as 0x40000000
+- [ ] 5.3 Copy hello_bin to 0x40000000 via memcpy (MISSING)
 
 ## 6. Kernel Integration
 
-- [x] 6.1 Include `process.h` and `tss.h` in kernel.h
-- [x] 6.2 Modify `main.c`: call `tss_init()` after GDT init
-- [x] 6.3 Modify `main.c`: call `process_init()` after TSS init
-- [x] 6.4 Modify `main.c`: call `process_create("hello", HELLO_ADDR)`
-- [x] 6.5 Modify `main.c`: copy hello binary to 0x40000000 via memcpy
-- [x] 6.6 Modify `main.c`: call `process_start(hello)` to launch hello
-- [x] 6.7 Implement `kernel_halt_loop()` function called after process_start returns
-- [ ] 6.8 Ensure paging maps 0x40000000 as user-accessible (U/S=1)
+- [x] 6.1 Include process.h, tss.h, syscall.h in main.c
+- [x] 6.2 Call tss_init() after GDT init
+- [x] 6.3 Call process_init() after TSS init
+- [x] 6.4 Call process_create("hello", HELLO_ADDR)
+- [ ] 6.5 Copy hello_bin to 0x40000000 via memcpy (MISSING)
+- [x] 6.6 Call process_start(hello) to launch hello
+- [x] 6.7 kernel_halt_loop() after process_start returns
+- [ ] 6.8 Fix paging to map 0x40000000 with U/S=1 (0x40000000 not mapped)
 
-## 7. Build System Updates
+## 7. Build System
 
-- [x] 7.1 Add `process.c`, `tss.c`, `syscall.c`, `syscall_asm.S` to kernel Makefile OBJS
-- [x] 7.2 Add page_dir.o, enable_paging.o, interrupts.o to Makefile OBJS
-- [x] 7.3 Hello binary embedded directly in main.c (no link.ld change needed)
-- [x] 7.4 Create iso/boot/grub directory structure
-- [x] 7.5 Create iso/boot/grub/grub.cfg for multiboot
-- [x] 7.6 Fix Makefile iso target with proper directory creation
-- [x] 7.7 Add qemu target that uses -kernel directly (no ISO needed for testing)
+- [x] 7.1 Add process.c, tss.c, syscall.c, syscall_asm.S to Makefile
+- [x] 7.2 Add gdt_set_gate export to gdt.h
+- [x] 7.3 iso/boot/grub directory and grub.cfg created
+- [x] 7.4 Makefile iso and qemu targets working
 
-## 8. Testing and Verification
+## 8. Testing
 
-- [x] 8.1 Build kernel: `make clean && make`
-- [ ] 8.2 Run in QEMU: `make qemu` or `qemu-system-i386 -kernel kernel.bin`
-- [ ] 8.3 Verify serial output shows "Kernel starting..." sequence
-- [ ] 8.4 Verify VGA shows "MinOS Loaded"
-- [ ] 8.5 Verify "hola mundo" appears on screen from hello
-- [ ] 8.6 Verify kernel halts after hello exits (QEMU should show prompt)
-- [ ] 8.7 Test with QEMU monitor: check process table state (debug)
+**ISSUE: IDT flags corruption**
+- Writing flags=0xEE, reading flags=0x238
+- Causes: int 0x80 goes to default handler instead of syscall_handler
+- Status: INVESTIGATING
+
+**ISSUE: hello_bin not copied**
+- memcpy to 0x40000000 is missing from main.c
+- Status: NEEDS FIX
+
+**ISSUE: Paging user access**
+- 0x40000000 needs U/S=1 bit in PDE
+- Current PDEs only cover 0-256MB (0x10000000)
+- Status: NEEDS FIX
+
+- [ ] 8.1 Fix IDT entry 0x80 flags (0xEE not 0x238)
+- [ ] 8.2 Add memcpy to copy hello_bin to 0x40000000
+- [ ] 8.3 Extend PDEs to cover 0x40000000 (256+ entries)
+- [ ] 8.4 Add U/S=1 bit to PDE for 0x40000000
+- [ ] 8.5 Verify serial output shows "Syscall: exit called"
+- [ ] 8.6 Verify hello prints "hola mundo" or "HELLO" to VGA
+- [ ] 8.7 Kernel halts after hello exit
 
 ## 9. Documentation
 
-- [ ] 9.1 Update `README.md` with new process execution flow
-- [ ] 9.2 Add hello execution output screenshot or description
-- [ ] 9.3 Document TSS and ring transition in docs/arquitectura.md
+- [ ] 9.1 Update project.md with new process architecture
+- [ ] 9.2 Document TSS and ring transition flow
+- [ ] 9.3 Add syscall interface documentation
 
 ---
 
-## Task Status Summary
+## Known Bugs (Blocking)
 
-**Completed:** 29/53 tasks
-**Remaining:** 24 tasks (testing + docs)
+| Bug | Symptom | Root Cause | Status |
+|-----|---------|------------|--------|
+| IDT flags wrong | Default handler called | Memory corruption or struct issue | Investigating |
+| No memcpy hello | hello_bin not at 0x40000000 | Missing code | Needs fix |
+| Paging user | Page fault at 0x40000000 | PDEs don't cover address | Needs fix |
 
-**Core Implementation: COMPLETE**
-- TSS setup for ring 3 transition
-- Process management data structures
-- Process lifecycle functions
-- Syscall infrastructure
-- Hello program embedding
-- Kernel integration
-- Build system updates
+## Architecture
 
-**Pending:**
-- Testing in QEMU
-- Documentation updates
-- Paging user space verification
+```
+kernel_main()
+    ├─ PMM init
+    ├─ GDT init
+    ├─ IDT init (with bug in 0x80 entry)
+    ├─ Paging init (missing user mapping)
+    ├─ TSS init
+    ├─ Process init
+    ├─ process_create("hello", 0x40000000)
+    ├─ memcpy(hello_bin → 0x40000000)  [MISSING]
+    └─ process_start(hello)
+         └─ enter_user_mode() → iret to ring 3
+              └─ hello runs → int 0x80
+                   └─ syscall_handler()  [NOT REACHED - bug]
+                        └─ sys_exit() → kernel_halt()
+```
