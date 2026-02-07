@@ -1,0 +1,33 @@
+#ifndef PROCESS_H
+#define PROCESS_H
+
+#include <stdint.h>
+
+#define MAX_PROCESSES 4
+
+#define PROC_RUNNING 0
+#define PROC_EXITED  1
+
+#define HELLO_ADDR 0x40000000
+
+typedef struct {
+    uint32_t id;
+    uint32_t state;
+    uint32_t entry;
+    uint32_t eip;
+    char name[32];
+} pcb_t;
+
+typedef struct {
+    pcb_t processes[MAX_PROCESSES];
+    uint32_t count;
+    uint32_t next_pid;
+    uint32_t running;
+} process_table_t;
+
+void process_init(void);
+pcb_t* process_create(const char* name, uint32_t entry_addr);
+void process_start(pcb_t* pcb);
+pcb_t* process_get_current(void);
+
+#endif
