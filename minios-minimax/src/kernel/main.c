@@ -53,6 +53,7 @@ void kernel_main(multiboot_info_t* mbd) {
     serial_print("Kernel starting...\n");
 
     pmm_init(mbd);
+    pmm_test();
     serial_print("PMM initialized\n");
 
     serial_print("Free frames: ");
