@@ -9,29 +9,30 @@
 #include "process/process.h"
 #include "syscall/syscall.h"
 
+// Hello program using sys_write syscall
+// Loaded at USER_PROGRAM_BASE (0x40000000)
 uint8_t hello_bin[] = {
-    // mov eax, 0xB8000 (VGA text memory address)
-    0xB8, 0x00, 0x80, 0x0B, 0x00,
-    // mov es, eax (can't directly, so we'll skip this for now)
-    // Let's write directly to VGA memory at 0xB8000
-    // mov edi, 0xB8000 (destination)
-    0xBF, 0x00, 0x80, 0x0B, 0x00,
-    // mov esi, msg (source - we'll put message right after code)
-    0xBE, 0x22, 0x00, 0x00, 0x40,  // 0x40000022 (after this code at byte 34)
-    // mov ecx, 22 (11 characters * 2 bytes each)
-    0xB9, 0x16, 0x00, 0x00, 0x00,
-    // rep movsb (copy string to VGA)
-    0xF3, 0xA4,
-    // mov eax, 1 (syscall exit)
-    0xB8, 0x01, 0x00, 0x00, 0x00,
-    // mov ebx, 0 (exit code)
-    0xBB, 0x00, 0x00, 0x00, 0x00,
-    // int 0x80 (syscall)
+    // mov eax, 3 (syscall number: write)
+    0xB8, 0x03, 0x00, 0x00, 0x00,
+    // mov ebx, 1 (file descriptor: stdout)
+    0xBB, 0x01, 0x00, 0x00, 0x00,
+    // mov ecx, 0x40000023 (pointer to message - absolute address)
+    0xB9, 0x23, 0x00, 0x00, 0x40,
+    // mov edx, 20 (length of message)
+    0xBA, 0x14, 0x00, 0x00, 0x00,
+    // int 0x80 (invoke syscall)
     0xCD, 0x80,
-    // Message data: "hola mundo" with attributes
-    'h', 0x07, 'o', 0x07, 'l', 0x07, 'a', 0x07,
-    ' ', 0x07, 'm', 0x07, 'u', 0x07, 'n', 0x07,
-    'd', 0x07, 'o', 0x07, '!', 0x07
+    // mov eax, 1 (syscall number: exit)
+    0xB8, 0x01, 0x00, 0x00, 0x00,
+    // mov ebx, 0 (exit code: success)
+    0xBB, 0x00, 0x00, 0x00, 0x00,
+    // int 0x80 (invoke syscall)
+    0xCD, 0x80,
+    // hlt (should never reach here)
+    0xF4,
+    // Message data: "Hello from syscall!\n" (starts at byte 35 = 0x23)
+    'H', 'e', 'l', 'l', 'o', ' ', 'f', 'r', 'o', 'm', ' ', 's',
+    'y', 's', 'c', 'a', 'l', 'l', '!', '\n'
 };
 
 static inline uint8_t inb(uint16_t port) {
@@ -99,6 +100,92 @@ void serial_print_hex(uint32_t val) {
     // Print remaining digits
     while (i < 8) {
         serial_putchar(buf[i++]);
+    }
+}
+
+/* VGA driver state */
+static uint16_t cursor_x = 0;  // Column (0-79)
+static uint16_t cursor_y = 0;  // Row (0-24)
+static volatile uint16_t* vga_buffer = (volatile uint16_t*)0xB8000;
+static const uint8_t vga_color = 0x07;  // Light gray on black
+static const uint16_t VGA_WIDTH = 80;
+static const uint16_t VGA_HEIGHT = 25;
+
+/* VGA driver functions */
+void vga_clear(void) {
+    for (uint16_t y = 0; y < VGA_HEIGHT; y++) {
+        for (uint16_t x = 0; x < VGA_WIDTH; x++) {
+            const uint16_t index = y * VGA_WIDTH + x;
+            vga_buffer[index] = (vga_color << 8) | ' ';
+        }
+    }
+    cursor_x = 0;
+    cursor_y = 0;
+}
+
+static void vga_scroll(void) {
+    // Move all lines up by one
+    for (uint16_t y = 0; y < VGA_HEIGHT - 1; y++) {
+        for (uint16_t x = 0; x < VGA_WIDTH; x++) {
+            const uint16_t src_index = (y + 1) * VGA_WIDTH + x;
+            const uint16_t dst_index = y * VGA_WIDTH + x;
+            vga_buffer[dst_index] = vga_buffer[src_index];
+        }
+    }
+    
+    // Clear the last line
+    for (uint16_t x = 0; x < VGA_WIDTH; x++) {
+        const uint16_t index = (VGA_HEIGHT - 1) * VGA_WIDTH + x;
+        vga_buffer[index] = (vga_color << 8) | ' ';
+    }
+    
+    cursor_y = VGA_HEIGHT - 1;
+}
+
+void vga_putchar(char c) {
+    if (c == '\n') {
+        cursor_x = 0;
+        cursor_y++;
+        if (cursor_y >= VGA_HEIGHT) {
+            vga_scroll();
+        }
+        return;
+    }
+    
+    if (c == '\r') {
+        cursor_x = 0;
+        return;
+    }
+    
+    if (c == '\t') {
+        cursor_x = (cursor_x + 4) & ~(4 - 1);
+        if (cursor_x >= VGA_WIDTH) {
+            cursor_x = 0;
+            cursor_y++;
+            if (cursor_y >= VGA_HEIGHT) {
+                vga_scroll();
+            }
+        }
+        return;
+    }
+    
+    // Regular character
+    const uint16_t index = cursor_y * VGA_WIDTH + cursor_x;
+    vga_buffer[index] = (vga_color << 8) | c;
+    
+    cursor_x++;
+    if (cursor_x >= VGA_WIDTH) {
+        cursor_x = 0;
+        cursor_y++;
+        if (cursor_y >= VGA_HEIGHT) {
+            vga_scroll();
+        }
+    }
+}
+
+void vga_write(const char* str, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        vga_putchar(str[i]);
     }
 }
 

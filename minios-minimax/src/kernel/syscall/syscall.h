@@ -1,9 +1,14 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
-#define SYSCALL_EXIT 1
+#include <stdint.h>
+#include <stddef.h>
 
-void syscall_handler(void);
+#define SYSCALL_EXIT 1
+#define SYSCALL_WRITE 3
+
+int syscall_handler(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 void sys_exit(int code);
+int sys_write(int fd, const char* buf, size_t count);
 
 #endif
