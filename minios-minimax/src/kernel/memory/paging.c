@@ -227,3 +227,144 @@ void paging_test(void) {
 
     serial_print("Paging: All self-tests passed!\n");
 }
+
+void paging_extended_test(void) {
+    uint32_t saved_cr3;
+
+    serial_print("Paging: Running extended self-tests...\n");
+
+    serial_print("Paging: Verifying PDE consistency (0-63)...\n");
+    for (int i = 0; i < 64; i++) {
+        uint32_t pde = page_dir[i];
+
+        if ((pde & 0x00000001) != 0x00000001) {
+            serial_print("Paging: FAILED - PDE ");
+            serial_print_uint(i);
+            serial_print(" present bit incorrect\n");
+            return;
+        }
+
+        if ((pde & 0x00000002) != 0x00000002) {
+            serial_print("Paging: FAILED - PDE ");
+            serial_print_uint(i);
+            serial_print(" rw bit incorrect\n");
+            return;
+        }
+
+        if ((pde & 0x00000080) != 0x00000080) {
+            serial_print("Paging: FAILED - PDE ");
+            serial_print_uint(i);
+            serial_print(" ps bit incorrect\n");
+            return;
+        }
+
+        uint32_t expected_base = (i * 0x400000) & 0xFFC00000;
+        uint32_t actual_base = pde & 0xFFC00000;
+        if (expected_base != actual_base) {
+            serial_print("Paging: FAILED - PDE ");
+            serial_print_uint(i);
+            serial_print(" base mismatch: expected 0x");
+            serial_print_uint(expected_base);
+            serial_print(" got 0x");
+            serial_print_uint(actual_base);
+            serial_print("\n");
+            return;
+        }
+    }
+    serial_print("Paging: PDE 0-63 consistency verified\n");
+
+    serial_print("Paging: Testing PDE alignment...\n");
+    for (int i = 0; i < 64; i++) {
+        uint32_t pde = page_dir[i];
+        uint32_t base = (pde >> 22) & 0x3FF;
+        if (base != (uint32_t)i) {
+            serial_print("Paging: FAILED - PDE ");
+            serial_print_uint(i);
+            serial_print(" alignment: expected ");
+            serial_print_uint(i);
+            serial_print(" got ");
+            serial_print_uint(base);
+            serial_print("\n");
+            return;
+        }
+    }
+    serial_print("Paging: PDE alignment OK\n");
+
+    serial_print("Paging: Testing CR3 reload consistency...\n");
+    saved_cr3 = get_cr3();
+
+    __asm__ volatile (
+        "movl %%cr3, %%eax\n"
+        "movl %%eax, %%cr3\n"
+        : : : "eax", "memory"
+    );
+
+    uint32_t new_cr3 = get_cr3();
+    if (saved_cr3 != new_cr3) {
+        serial_print("Paging: FAILED - CR3 changed after reload: 0x");
+        serial_print_uint(saved_cr3);
+        serial_print(" -> 0x");
+        serial_print_uint(new_cr3);
+        serial_print("\n");
+        return;
+    }
+    serial_print("Paging: CR3 reload consistent\n");
+
+    serial_print("Paging: Testing page directory entry access (read-only)...\n");
+    volatile uint32_t* pde_ptr = (volatile uint32_t*)&page_dir[0];
+    uint32_t pde_value = *pde_ptr;
+    if (pde_value == 0) {
+        serial_print("Paging: FAILED - PDE[0] is zero (should be identity mapping)\n");
+        return;
+    }
+    serial_print("Paging: PDE[0] readable: 0x");
+    serial_print_uint(pde_value);
+    serial_print("\n");
+
+    serial_print("Paging: Verifying upper memory is unmapped (>256MB)...\n");
+    uint32_t upper_pde_idx = 0x10000000 / 0x400000;
+    if (upper_pde_idx >= 1024 || page_dir[upper_pde_idx] == 0) {
+        serial_print("Paging: Upper memory region (>256MB) correctly unmapped\n");
+    } else {
+        serial_print("Paging: WARNING - Upper memory region unexpectedly mapped\n");
+    }
+
+    serial_print("Paging: Testing write pattern stress test...\n");
+    uint32_t stress_patterns[] = {
+        0xFFFFFFFF, 0x00000000, 0xA5A5A5A5,
+        0x5A5A5A5A, 0x12345678, 0x87654321
+    };
+    int stress_failures = 0;
+
+    for (int p = 0; p < 6; p++) {
+        uint32_t pattern = stress_patterns[p];
+        for (uint32_t addr = 0x100000; addr < 0x4000000; addr += 0x100000) {
+            volatile uint32_t* ptr = (volatile uint32_t*)addr;
+            uint32_t saved = *ptr;
+            *ptr = pattern;
+            if (*ptr != pattern) {
+                stress_failures++;
+                if (stress_failures <= 5) {
+                    serial_print("Paging: FAILED - stress write at 0x");
+                    serial_print_uint(addr);
+                    serial_print(" expected 0x");
+                    serial_print_uint(pattern);
+                    serial_print(" got 0x");
+                    serial_print_uint(*ptr);
+                    serial_print("\n");
+                }
+                *ptr = saved;
+            }
+        }
+    }
+
+    if (stress_failures > 0) {
+        serial_print("Paging: FAILED - ");
+        serial_print_uint(stress_failures);
+        serial_print(" stress test failures\n");
+        return;
+    }
+    serial_print("Paging: Stress test passed (multiple patterns)\n");
+
+    serial_print("Paging: All extended self-tests passed!\n");
+}

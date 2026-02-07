@@ -68,6 +68,7 @@ void kernel_main(multiboot_info_t* mbd) {
 
     paging_init();
     paging_test();
+    paging_extended_test();
 
     for (int i = 0; message[i] != '\0'; i++) {
         vga[i] = (color << 8) | message[i];
