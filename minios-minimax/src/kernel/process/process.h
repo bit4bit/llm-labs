@@ -26,6 +26,7 @@ typedef struct {
 
 void process_init(void);
 pcb_t* process_create(const char* name, uint32_t entry_addr);
+int process_load(pcb_t* pcb, const uint8_t* binary, uint32_t size);
 void process_start(pcb_t* pcb);
 pcb_t* process_get_current(void);
 

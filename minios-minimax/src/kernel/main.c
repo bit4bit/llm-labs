@@ -9,31 +9,8 @@
 #include "process/process.h"
 #include "syscall/syscall.h"
 
-// Hello program using sys_write syscall
-// Loaded at USER_PROGRAM_BASE (0x40000000)
-uint8_t hello_bin[] = {
-    // mov eax, 3 (syscall number: write)
-    0xB8, 0x03, 0x00, 0x00, 0x00,
-    // mov ebx, 1 (file descriptor: stdout)
-    0xBB, 0x01, 0x00, 0x00, 0x00,
-    // mov ecx, 0x40000023 (pointer to message - absolute address)
-    0xB9, 0x23, 0x00, 0x00, 0x40,
-    // mov edx, 20 (length of message)
-    0xBA, 0x14, 0x00, 0x00, 0x00,
-    // int 0x80 (invoke syscall)
-    0xCD, 0x80,
-    // mov eax, 1 (syscall number: exit)
-    0xB8, 0x01, 0x00, 0x00, 0x00,
-    // mov ebx, 0 (exit code: success)
-    0xBB, 0x00, 0x00, 0x00, 0x00,
-    // int 0x80 (invoke syscall)
-    0xCD, 0x80,
-    // hlt (should never reach here)
-    0xF4,
-    // Message data: "Hello from syscall!\n" (starts at byte 35 = 0x23)
-    'H', 'e', 'l', 'l', 'o', ' ', 'f', 'r', 'o', 'm', ' ', 's',
-    'y', 's', 'c', 'a', 'l', 'l', '!', '\n'
-};
+// Include generated C program binary
+#include "../../programs/generated/hello_bin.c"
 
 static inline uint8_t inb(uint16_t port) {
     uint8_t val;
@@ -261,37 +238,16 @@ void kernel_main(multiboot_info_t* mbd) {
         serial_print("Test: FAILED - memory not working!\n");
     }
     
-    /* Copy hello_bin to user space at USER_PROGRAM_BASE */
-    serial_print("Copying hello_bin (");
-    serial_print_uint(sizeof(hello_bin));
-    serial_print(" bytes) to 0x");
-    serial_print_hex(USER_PROGRAM_BASE);
-    serial_print("...\n");
-    
-    uint8_t* dest = (uint8_t*)USER_PROGRAM_BASE;
-    for (uint32_t i = 0; i < sizeof(hello_bin); i++) {
-        dest[i] = hello_bin[i];
-    }
-    
-    serial_print("hello_bin copied successfully\n");
-    
-    /* Verify first few bytes */
-    serial_print("Verifying: first 4 bytes at 0x");
-    serial_print_hex(USER_PROGRAM_BASE);
-    serial_print(" = 0x");
-    serial_print_hex(dest[0]);
-    serial_print(" 0x");
-    serial_print_hex(dest[1]);
-    serial_print(" 0x");
-    serial_print_hex(dest[2]);
-    serial_print(" 0x");
-    serial_print_hex(dest[3]);
-    serial_print("\n");
-
     /* Create hello process */
     pcb_t* hello = process_create("hello", USER_PROGRAM_BASE);
     if (hello == NULL) {
         serial_print("Error: Could not create hello process\n");
+        while (1) __asm__ volatile ("hlt");
+    }
+
+    /* Load C program binary into user space */
+    if (process_load(hello, hello_bin, hello_bin_size) != 0) {
+        serial_print("Error: Could not load hello program\n");
         while (1) __asm__ volatile ("hlt");
     }
 

@@ -9,17 +9,18 @@ LDFLAGS = -T link.ld -nostdlib -m elf_i386
 
 KERNEL_OBJS = src/kernel/boot/multiboot.o src/kernel/boot/boot.o src/kernel/main.o src/kernel/memory/alloc.o src/kernel/memory/paging.o src/kernel/memory/page_dir.o src/kernel/memory/enable_paging.o src/kernel/cpu/gdt.o src/kernel/cpu/idt.o src/kernel/cpu/interrupts.o src/kernel/cpu/tss.o src/kernel/syscall/syscall.o src/kernel/syscall/syscall_asm.o src/kernel/process/process.o src/kernel/process/trampoline.o
 
-.PHONY: all iso qemu qemu-test qemu-simple qemu-debug qemu-int qemu-vga help clean
+.PHONY: all iso qemu qemu-test qemu-simple qemu-debug qemu-int qemu-vga help clean programs programs-clean programs-generated
 
 # Default target
-all: kernel.bin
+all: programs programs-generated kernel.bin
 
 # Help target - show available commands
 help:
 	@echo "MinOS Minimax - Available Make Targets:"
 	@echo ""
-	@echo "  make              - Build kernel.bin (default)"
+	@echo "  make              - Build programs and kernel.bin (default)"
 	@echo "  make all          - Same as 'make'"
+	@echo "  make programs     - Build user programs only"
 	@echo "  make clean        - Remove all build artifacts"
 	@echo ""
 	@echo "QEMU Execution:"
@@ -33,10 +34,27 @@ help:
 	@echo "Build artifacts:"
 	@echo "  make iso          - Create bootable ISO image"
 	@echo ""
-	@echo "Expected output: Program prints 'hola mundo!' to VGA memory"
+	@echo "User Programs:"
+	@echo "  make programs          - Compile C programs to binaries"
+	@echo "  make programs-generated - Generate C arrays from binaries"
+	@echo "  make programs-clean    - Clean program build artifacts"
+	@echo ""
+	@echo "Expected output: Program prints 'Hello from C program!' to VGA memory"
 	@echo ""
 
-kernel.bin: $(KERNEL_OBJS) link.ld
+# Build user programs
+programs:
+	$(MAKE) -C programs
+
+# Generate C arrays from program binaries
+programs-generated:
+	$(MAKE) -C programs generated
+
+# Clean program build artifacts
+programs-clean:
+	$(MAKE) -C programs clean
+
+kernel.bin: programs/generated/hello_bin.c $(KERNEL_OBJS) link.ld
 	$(LD) $(LDFLAGS) -o $@ $(KERNEL_OBJS)
 
 src/kernel/boot/multiboot.o: src/kernel/boot/multiboot.S
@@ -45,7 +63,7 @@ src/kernel/boot/multiboot.o: src/kernel/boot/multiboot.S
 src/kernel/boot/boot.o: src/kernel/boot/boot.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
-src/kernel/main.o: src/kernel/main.c
+src/kernel/main.o: src/kernel/main.c programs/generated/hello_bin.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 src/kernel/memory/alloc.o: src/kernel/memory/alloc.c src/kernel/memory/memory.h
@@ -112,5 +130,5 @@ qemu-int: kernel.bin
 qemu-vga: kernel.bin
 	qemu-system-i386 -kernel kernel.bin -serial stdio
 
-clean:
+clean: programs-clean
 	rm -f kernel.bin minios.iso $(KERNEL_OBJS) qemu.log

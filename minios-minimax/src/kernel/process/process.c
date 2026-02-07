@@ -5,6 +5,8 @@
 #include "../cpu/constants.h"
 #include "../cpu/idt.h"
 
+extern void serial_print(const char* str);
+extern void serial_print_uint(uint32_t val);
 extern void serial_print_hex(uint32_t val);
 
 process_table_t process_table;
@@ -49,6 +51,42 @@ pcb_t* process_create(const char* name, uint32_t entry_addr) {
     serial_print("\n");
 
     return pcb;
+}
+
+int process_load(pcb_t* pcb, const uint8_t* binary, uint32_t size) {
+    if (pcb == NULL || binary == NULL || size == 0) {
+        serial_print("Process: Error - invalid load parameters\n");
+        return -1;
+    }
+
+    serial_print("Process: Loading ");
+    serial_print(pcb->name);
+    serial_print(" (");
+    serial_print_uint(size);
+    serial_print(" bytes) to 0x");
+    serial_print_hex(pcb->entry);
+    serial_print("...\n");
+
+    /* Copy binary to user space address */
+    uint8_t* dest = (uint8_t*)pcb->entry;
+    for (uint32_t i = 0; i < size; i++) {
+        dest[i] = binary[i];
+    }
+
+    serial_print("Process: Binary loaded successfully\n");
+
+    /* Verify first few bytes */
+    serial_print("Process: First 4 bytes = 0x");
+    serial_print_hex(dest[0]);
+    serial_print(" 0x");
+    serial_print_hex(dest[1]);
+    serial_print(" 0x");
+    serial_print_hex(dest[2]);
+    serial_print(" 0x");
+    serial_print_hex(dest[3]);
+    serial_print("\n");
+
+    return 0;
 }
 
 pcb_t* process_get_current(void) {
