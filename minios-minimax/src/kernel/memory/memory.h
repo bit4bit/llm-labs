@@ -34,7 +34,10 @@ extern uint8_t* pmm_bitmap;
 
 void pmm_init(multiboot_info_t* mbd);
 void* pmm_alloc_frame(void);
+void* pmm_alloc_frame_4mb(void);
+void* pmm_alloc_frame_reserved(void);
 void pmm_free_frame(void* addr);
+void pmm_free_frame_4mb(void* addr);
 uint32_t pmm_get_free_count(void);
 void pmm_test(void);
 

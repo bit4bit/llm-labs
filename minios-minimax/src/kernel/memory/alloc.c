@@ -91,6 +91,53 @@ void pmm_free_frame(void* addr) {
     }
 }
 
+void pmm_free_frame_4mb(void* addr) {
+    uint32_t frame = (uint32_t)addr / PAGE_SIZE;
+    if (frame + 1024 <= pmm_frame_count) {
+        for (uint32_t i = 0; i < 1024; i++) {
+            bitmap_clear(frame + i);
+            pmm_used_frames--;
+        }
+    }
+}
+
+void* pmm_alloc_frame_4mb(void) {
+    for (uint32_t i = 0; i < pmm_frame_count; i += 1024) {
+        int free = 1;
+        for (uint32_t j = 0; j < 1024; j++) {
+            if (bitmap_test(i + j)) {
+                free = 0;
+                break;
+            }
+        }
+        if (free) {
+            for (uint32_t j = 0; j < 1024; j++) {
+                bitmap_set(i + j);
+                pmm_used_frames++;
+            }
+            return (void*)(i * PAGE_SIZE);
+        }
+    }
+    DEBUG_ERROR("OUT OF MEMORY (4MB)!");
+    while (1) {
+        __asm__ volatile ("hlt");
+    }
+}
+
+void* pmm_alloc_frame_reserved(void) {
+    for (uint32_t i = 16; i < pmm_frame_count; i++) {
+        if (!bitmap_test(i)) {
+            bitmap_set(i);
+            pmm_used_frames++;
+            return (void*)(i * PAGE_SIZE);
+        }
+    }
+    DEBUG_ERROR("OUT OF MEMORY (reserved)!");
+    while (1) {
+        __asm__ volatile ("hlt");
+    }
+}
+
 uint32_t pmm_get_free_count(void) {
     return pmm_frame_count - pmm_used_frames;
 }

@@ -8,6 +8,7 @@ Usage: ./bin2c.py <input.bin> <array_name>
 import sys
 import os
 
+
 def bin2c(input_file, array_name):
     """Convert binary file to C array format."""
 
@@ -20,7 +21,7 @@ def bin2c(input_file, array_name):
     file_size = os.path.getsize(input_file)
 
     # Read binary data
-    with open(input_file, 'rb') as f:
+    with open(input_file, "rb") as f:
         data = f.read()
 
     # Generate C array header
@@ -34,8 +35,8 @@ def bin2c(input_file, array_name):
     # Convert bytes to hex format (16 bytes per line)
     bytes_per_line = 16
     for i in range(0, len(data), bytes_per_line):
-        line_bytes = data[i:i+bytes_per_line]
-        hex_values = ', '.join(f"0x{b:02X}" for b in line_bytes)
+        line_bytes = data[i : i + bytes_per_line]
+        hex_values = ", ".join(f"0x{b:02X}" for b in line_bytes)
 
         # Add trailing comma except for last line
         if i + bytes_per_line < len(data):
@@ -52,6 +53,7 @@ def bin2c(input_file, array_name):
 
     return 0
 
+
 def main():
     if len(sys.argv) != 3:
         print("Usage: bin2c.py <input.bin> <array_name>", file=sys.stderr)
@@ -63,5 +65,6 @@ def main():
 
     return bin2c(input_file, array_name)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())
