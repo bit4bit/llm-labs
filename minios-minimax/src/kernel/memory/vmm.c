@@ -2,6 +2,7 @@
 #include "../minios.h"
 #include "../debug.h"
 #include "memory.h"
+#include "../minios-c.h"
 
 extern uint32_t page_dir[1024];
 extern void enable_paging_dir(void);
@@ -9,9 +10,7 @@ extern void enable_paging_dir(void);
 void vmm_init(void) {
     DEBUG_VMM("Initializing...");
 
-    for (int i = 0; i < 1024; i++) {
-        page_dir[i] = 0;
-    }
+    memset(page_dir, 0, 1024 * sizeof(uint32_t));
 
     DEBUG_VMM("Setting up kernel identity mapping (4MB pages)...");
 

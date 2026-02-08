@@ -1,6 +1,7 @@
 #include "memory.h"
 #include "../kernel.h"
 #include "../debug.h"
+#include "../minios-c.h"
 
 #define BITMAP_SET(bit)      (pmm_bitmap[(bit) / 8] |= (1 << ((bit) % 8)))
 #define BITMAP_CLEAR(bit)    (pmm_bitmap[(bit) / 8] &= ~(1 << ((bit) % 8)))
@@ -33,9 +34,7 @@ void pmm_init(multiboot_info_t* mbd) {
     uint32_t bitmap_size = (pmm_frame_count + 7) / 8;
     pmm_bitmap = (uint8_t*)0x1000000;
 
-    for (uint32_t i = 0; i < bitmap_size; i++) {
-        pmm_bitmap[i] = 0;
-    }
+    memset(pmm_bitmap, 0, bitmap_size);
 
     pmm_used_frames = 0;
 
