@@ -29,7 +29,7 @@ void paging_init(void) {
     DEBUG_PAGING("Enabled!");
 
     DEBUG_PAGING("Allocating user program region...");
-    void* user_prog_phys = pmm_alloc_frame_4mb();
+    void* user_prog_phys = pmm_alloc_frame();
     if (!user_prog_phys) {
         DEBUG_ERROR("Failed to allocate user program region");
         return;
@@ -38,7 +38,7 @@ void paging_init(void) {
     DEBUG_PAGING("PDE %u: 0x%X -> 0x%X", PDE_USER_PROGRAM, PDE_INDEX_TO_VADDR(PDE_USER_PROGRAM), (uint32_t)user_prog_phys);
 
     DEBUG_PAGING("Allocating user stack region...");
-    void* user_stack_phys = pmm_alloc_frame_4mb();
+    void* user_stack_phys = pmm_alloc_frame();
     if (!user_stack_phys) {
         DEBUG_ERROR("Failed to allocate user stack region");
         return;
