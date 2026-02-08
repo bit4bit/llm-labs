@@ -78,7 +78,7 @@ src/kernel/memory/alloc.o: src/kernel/memory/pmm.c src/kernel/memory/memory.h
 src/kernel/memory/vmm.o: src/kernel/memory/vmm.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-src/kernel/memory/page_dir.o: src/kernel/memory/page_dir.asm
+src/kernel/memory/page_dir.o: src/kernel/memory/page_dir.S
 	$(AS) $(ASFLAGS) -o $@ $<
 
 src/kernel/memory/enable_paging.o: src/kernel/memory/enable_paging.S
