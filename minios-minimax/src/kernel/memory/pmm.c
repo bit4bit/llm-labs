@@ -109,6 +109,8 @@ void pmm_test(void) {
         return;
     }
 
+    uint32_t initial_free = pmm_get_free_count();
+
     DEBUG_PMM("Testing allocation and deallocation...");
 
     void* frame1 = pmm_alloc_frame();
@@ -118,7 +120,7 @@ void pmm_test(void) {
     DEBUG_PMM("Allocated frame 2 at 0x%X", (uint32_t)frame2);
 
     uint32_t free_after_alloc = pmm_get_free_count();
-    if (free_after_alloc != pmm_frame_count - 2) {
+    if (free_after_alloc != initial_free - 2) {
         DEBUG_ERROR("Free count mismatch");
         return;
     }
@@ -141,7 +143,7 @@ void pmm_test(void) {
     pmm_free_frame(frame2);
 
     uint32_t free_after_free = pmm_get_free_count();
-    if (free_after_free != pmm_frame_count - pmm_used_frames) {
+    if (free_after_free != initial_free) {
         DEBUG_ERROR("Free count mismatch after free");
         return;
     }
