@@ -5,7 +5,7 @@
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
 #include "cpu/tss.h"
-#include "memory/paging.h"
+#include "memory/vmm.h"
 #include "process/process.h"
 #include "syscall/syscall.h"
 #include "debug.h"
@@ -30,9 +30,7 @@ void kernel_main(multiboot_info_t* mbd) {
     idt_init();
     DEBUG_INFO("IDT initialized");
 
-    paging_init();
-    paging_test();
-    paging_extended_test();
+    vmm_init();
 
     for (int i = 0; message[i] != '\0'; i++) {
         vga[i] = (color << 8) | message[i];
