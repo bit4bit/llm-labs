@@ -72,7 +72,7 @@ src/kernel/main.o: src/kernel/main.c src/kernel/programs.h
 src/kernel/programs.o: src/kernel/programs.c src/kernel/programs.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-src/kernel/memory/alloc.o: src/kernel/memory/alloc.c src/kernel/memory/memory.h
+src/kernel/memory/alloc.o: src/kernel/memory/pmm.c src/kernel/memory/memory.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 src/kernel/memory/vmm.o: src/kernel/memory/vmm.c

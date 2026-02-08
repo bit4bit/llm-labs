@@ -32,7 +32,7 @@ minios/
 │   │   │   └── idt.c        # Interrupt Descriptor Table
 │   │   ├── memory/
 │   │   │   ├── paging.c     # Implementación de paging
-│   │   │   └── alloc.c      # Physical Memory Manager
+│   │   │   └── pmm.c      # Physical Memory Manager
 │   │   ├── drivers/
 │   │   │   ├── timer/
 │   │   │   │   └── pit.c    # PIT timer interrupt driver
@@ -125,7 +125,7 @@ src/kernel/boot/multiboot.S  →  src/kernel/main.c
 src/kernel/cpu/gdt.c         →  src/kernel/main.c
 src/kernel/cpu/idt.c         →  src/kernel/main.c
 src/kernel/memory/paging.c   →  src/kernel/main.c
-src/kernel/memory/alloc.c    →  src/kernel/memory/paging.c
+src/kernel/memory/pmm.c    →  src/kernel/memory/paging.c
 src/kernel/drivers/video/vga.c →  src/kernel/drivers/driver.h
 src/kernel/drivers/keyboard/keyboard.c →  src/kernel/drivers/driver.h
 src/kernel/drivers/timer/pit.c →  src/kernel/main.c

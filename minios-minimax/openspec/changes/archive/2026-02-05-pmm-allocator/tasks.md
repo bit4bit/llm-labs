@@ -7,7 +7,7 @@
 - [x] 1.3 Define multiboot_memory_map_t struct (packed)
 - [x] 1.4 Declare extern variables: bitmap, frame_count, used_frames
 
-### 2. Create alloc.c PMM implementation
+### 2. Create pmm.c PMM implementation
 
 - [x] 2.1 Implement bitmap_test(index) - return bit at index
 - [x] 2.2 Implement bitmap_set(index) - set bit to 1
@@ -47,7 +47,7 @@
 | File | Action |
 |------|--------|
 | src/kernel/memory/memory.h | Created |
-| src/kernel/memory/alloc.c | Created |
+| src/kernel/memory/pmm.c | Created |
 | src/kernel/kernel.h | Created |
 | src/kernel/main.c | Modified |
 | src/kernel/boot/boot.s | Modified |

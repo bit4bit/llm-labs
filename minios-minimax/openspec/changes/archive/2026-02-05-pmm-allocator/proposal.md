@@ -8,7 +8,7 @@ The kernel currently cannot allocate dynamic memory. To implement paging, kernel
 ## What Changes
 
 - Create `src/kernel/memory/memory.h`: Constants and type definitions
-- Create `src/kernel/memory/alloc.c`: PMM implementation with bitmap
+- Create `src/kernel/memory/pmm.c`: PMM implementation with bitmap
 - Update `src/kernel/main.c`: Initialize PMM during boot
 - Update `src/kernel/kernel.h`: Add PMM function declarations
 
