@@ -70,6 +70,17 @@ pcb_t* process_get_current(void) {
     return current_process;
 }
 
+void process_set_running(uint32_t pid) {
+    process_table.running = pid;
+}
+
+void process_mark_exited(pcb_t* pcb) {
+    if (pcb) {
+        pcb->state = PROC_EXITED;
+    }
+    process_table.running = 0;
+}
+
 void process_start(pcb_t* pcb) {
     DEBUG_PROC("Starting %s at 0x%X", pcb->name, pcb->entry);
 

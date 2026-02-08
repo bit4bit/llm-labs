@@ -12,10 +12,12 @@
 
 #include "programs.h"
 
+void process_exit_return(void);
+
 void kernel_main(multiboot_info_t* mbd) {
     volatile uint16_t* vga = (volatile uint16_t*)VGA_MEMORY;
     const char* message = "MinOS Loaded";
-    uint8_t color = 0x07;
+    uint8_t color = 0x0A;
 
     DEBUG_INFO("Kernel starting...");
 
@@ -83,7 +85,11 @@ void kernel_main(multiboot_info_t* mbd) {
     DEBUG_INFO("About to call process_start...");
     process_start(hello);
 
-    DEBUG_ERROR("process_start returned unexpectedly");
+    process_exit_return();
+}
+
+void process_exit_return(void) {
+    DEBUG_INFO("process_start returned to kernel!");
     while (1) {
         __asm__ volatile ("hlt");
     }

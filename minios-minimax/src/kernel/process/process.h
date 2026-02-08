@@ -29,5 +29,7 @@ pcb_t* process_create(const char* name, uint32_t entry_addr);
 int process_load(pcb_t* pcb, const uint8_t* binary, uint32_t size);
 void process_start(pcb_t* pcb);
 pcb_t* process_get_current(void);
+void process_set_running(uint32_t pid);
+void process_mark_exited(pcb_t* pcb);
 
 #endif

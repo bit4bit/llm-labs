@@ -9,8 +9,6 @@
 #define USER_PROGRAM_BASE 0x40000000
 #define USER_PROGRAM_SIZE 0x00100000
 
-extern void syscall_return_to_kernel(void);
-
 static int validate_user_pointer(const void* ptr, size_t len) {
     uint32_t addr = (uint32_t)ptr;
     
@@ -63,46 +61,24 @@ int syscall_handler(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     DEBUG_SYSCALL("%u (ebx=%u, ecx=0x%X, edx=%u)", eax, ebx, ecx, edx);
 
     switch (eax) {
+        case SYSCALL_EXIT:
+            DEBUG_SYSCALL("exit called with code %u", ebx);
+
+            {
+                pcb_t* pcb = process_get_current();
+                process_mark_exited(pcb);
+                if (pcb) {
+                    DEBUG_SYSCALL("Process %s marked as exited with code %d", pcb->name, ebx);
+                }
+            }
+
+            DEBUG_SYSCALL("Returning to kernel...");
+            return SYSCALL_EXIT;
+
         case SYSCALL_WRITE:
             DEBUG_SYSCALL("write called");
             result = sys_write((int)ebx, (const char*)ecx, (size_t)edx);
             DEBUG_SYSCALL("write returned %d", result);
-            break;
-            
-        case SYSCALL_EXIT:
-            DEBUG_SYSCALL("exit called with code %u", ebx);
-
-            DEBUG_SYSCALL("VGA Memory (first line as ASCII):");
-            volatile uint16_t* vga = (volatile uint16_t*)0xB8000;
-            serial_print("  \"");
-            for (int i = 0; i < 40; i++) {
-                uint16_t val = vga[i];
-                uint8_t ch = val & 0xFF;
-                if (ch >= 32 && ch < 127) {
-                    serial_putchar(ch);
-                } else if (ch == 0) {
-                    serial_print(" ");
-                } else {
-                    serial_print("?");
-                }
-            }
-            serial_print("\"\n");
-            
-            DEBUG_SYSCALL("VGA Memory (bytes 0-21 as hex):");
-            serial_print("  ");
-            for (int i = 0; i < 11; i++) {
-                uint16_t val = vga[i];
-                uint8_t ch = val & 0xFF;
-                serial_print("0x");
-                serial_print_hex(ch);
-                serial_print(" ");
-            }
-            serial_print("\n");
-            
-            DEBUG_SYSCALL("Halting...");
-            while (1) {
-                __asm__ volatile ("hlt");
-            }
             break;
             
         default:
