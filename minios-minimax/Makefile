@@ -119,7 +119,8 @@ iso: kernel.bin iso/boot/grub/grub.cfg
 	cp kernel.bin iso/boot/
 	grub-mkrescue -o minios.iso iso 2>/dev/null || echo "Install grub-mkresuce for ISO generation"
 
-ci: clean all qemu-test
+ci: clean all
+	timeout -f 5 make qemu-test
 
 qemu: iso
 	qemu-system-i386 -cdrom minios.iso -m 64 -nographic
