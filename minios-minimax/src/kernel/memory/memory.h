@@ -15,6 +15,8 @@ typedef struct {
     uint32_t type;
 } __attribute__((packed)) multiboot_memory_map_t;
 
+_Static_assert(sizeof(multiboot_memory_map_t) == 24, "C18: multiboot_memory_map_t must be 24 bytes");
+
 typedef struct {
     uint32_t flags;
     uint32_t mem_lower;
@@ -27,6 +29,8 @@ typedef struct {
     uint32_t mmap_length;
     uint32_t mmap_addr;
 } __attribute__((packed)) multiboot_info_t;
+
+_Static_assert(sizeof(multiboot_info_t) == 52, "C18: multiboot_info_t must be 52 bytes");
 
 extern uint32_t pmm_frame_count;
 extern uint32_t pmm_used_frames;

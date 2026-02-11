@@ -3,7 +3,7 @@ LD = ld
 OBJCOPY = objcopy
 
 # Compiler flags for 32-bit freestanding programs
-CFLAGS = -m32 -ffreestanding -nostdlib -fno-pie -fno-stack-protector \
+CFLAGS = -std=c18 -m32 -ffreestanding -nostdlib -fno-pie -fno-stack-protector \
          -fno-builtin -nostdinc -O2 -Wall -Wextra -I./lib
 
 # Linker flags

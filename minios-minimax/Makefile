@@ -3,7 +3,7 @@ AS = as
 LD = ld
 OBJCOPY = objcopy
 
-CFLAGS = -m32 -fno-pie -no-pie -ffreestanding -O2 -Wall -Wextra
+CFLAGS = -std=c18 -m32 -fno-pie -no-pie -ffreestanding -O2 -Wall -Wextra
 ASFLAGS = --32
 LDFLAGS = -T link.ld -nostdlib -m elf_i386
 

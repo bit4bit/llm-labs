@@ -9,7 +9,7 @@
 #define SYSCALL_WRITE 3
 
 int syscall_handler(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
-void sys_exit(int code);
+_Noreturn void sys_exit(int code);
 int sys_write(int fd, const char* buf, size_t count);
 
 #endif

@@ -169,4 +169,8 @@
 /** Check if address is 4KB aligned */
 #define IS_4KB_ALIGNED(addr)        (((addr) & 0xFFF) == 0)
 
+_Static_assert(sizeof(char) == 1, "C18: char size invariant");
+_Static_assert(PAGE_SIZE_4KB == 4096, "C18: PAGE_SIZE_4KB must be 4096 bytes");
+_Static_assert(PAGE_SIZE_4MB == 4194304, "C18: PAGE_SIZE_4MB must be 4194304 bytes");
+
 #endif /* MINIOS_H */

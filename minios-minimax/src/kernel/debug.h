@@ -3,7 +3,7 @@
 
 #include "serial.h"
 
-void debug_print(const char* fmt, ...);
+_Noreturn void debug_print(const char* fmt, ...);
 
 #define DEBUG_INFO(fmt, ...)    debug_print("[INFO]  " fmt "\n", ##__VA_ARGS__)
 #define DEBUG_WARN(fmt, ...)     debug_print("[WARN]  " fmt "\n", ##__VA_ARGS__)

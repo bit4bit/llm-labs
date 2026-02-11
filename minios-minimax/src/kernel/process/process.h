@@ -17,12 +17,16 @@ typedef struct {
     char name[32];
 } pcb_t;
 
+_Static_assert(sizeof(pcb_t) == 48, "C18: pcb_t must be 48 bytes");
+
 typedef struct {
     pcb_t processes[MAX_PROCESSES];
     uint32_t count;
     uint32_t next_pid;
     uint32_t running;
 } process_table_t;
+
+_Static_assert(sizeof(process_table_t) == 204, "C18: process_table_t must be 204 bytes");
 
 void process_init(void);
 pcb_t* process_create(const char* name, uint32_t entry_addr);

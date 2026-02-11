@@ -13,10 +13,14 @@ struct idt_entry {
     uint16_t offset_high;
 } __attribute__((packed));
 
+_Static_assert(sizeof(struct idt_entry) == 8, "C18: idt_entry must be 8 bytes");
+
 struct idt_ptr {
     uint16_t limit;
     uint32_t base;
 } __attribute__((packed));
+
+_Static_assert(sizeof(struct idt_ptr) == 6, "C18: idt_ptr must be 6 bytes");
 
 extern struct idt_ptr idt_ptr;
 extern struct idt_entry idt_entries[IDT_ENTRIES];
