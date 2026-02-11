@@ -7,15 +7,15 @@ MiniOS Minimax supports user-space programs written in C that are embedded into 
 ### 1. Create Program Directory
 
 ```bash
-mkdir programs/<program_name>
+mkdir programs/src/<program_name>
 ```
 
 ### 2. Write C Source File
 
-Create `programs/<program_name>/<program_name>.c`:
+Create `programs/src/<program_name>/<program_name>.c`:
 
 ```c
-#include "../lib/syscall.h"
+#include "../../lib/syscall.h"
 
 void _start(void) {
     const char* msg = "Hello, MiniOS!\n";
@@ -50,26 +50,27 @@ int write(int fd, const char* buf, uint32_t len);  // Write to file descriptor
 ### Build Commands
 
 ```bash
-make programs          # Compile all C programs to .bin files
-make programs-generated  # Generate C arrays from binaries for kernel embedding
-make programs-clean    # Remove program build artifacts
+make programs              # Compile all C programs to .bin files
+make programs-generated    # Generate C arrays from binaries for kernel embedding
+make programs-clean        # Remove program build artifacts
 ```
 
 ### Program Structure
 
 ```
 programs/
-├── lib/                    # User-space library
-│   ├── syscall.h          # System call wrappers
-│   └── stdint.h           # Standard integer types
-├── <program_name>/        # Your program
-│   ├── <program_name>.c   # Source code
-│   ├── <program_name>.o   # Object file (generated)
-│   └── <program_name>.bin # Binary executable (generated)
-├── generated/             # C arrays for kernel (generated)
+├── src/                       # User program sources
+│   └── <program_name>/        # Your program
+│       ├── <program_name>.c   # Source code
+│       ├── <program_name>.o   # Object file (generated)
+│       └── <program_name>.bin # Binary executable (generated)
+├── lib/                       # User-space library
+│   ├── syscall.h              # System call wrappers
+│   └── stdint.h               # Standard integer types
+├── generated/                 # C arrays for kernel (generated)
 │   └── <program_name>_bin.c
-├── user.ld               # Linker script
-└── Makefile              # Build system
+├── user.ld                    # Linker script
+└── Makefile                  # Build system (delegates to Ruby)
 ```
 
 ### Integration with Kernel
@@ -93,4 +94,15 @@ Access programs in kernel code via `src/kernel/programs.h` extern declarations.
 
 ```bash
 make all  # Builds programs, generates C arrays, and kernel.bin
+```
+
+### Using Ruby Build Script
+
+The build system uses Ruby (`tools/build-programs.rb`):
+
+```bash
+ruby tools/build-programs.rb --all       # Build programs + generate C arrays
+ruby tools/build-programs.rb --clean      # Clean artifacts
+ruby tools/build-programs.rb --programs   # Build only .bin files
+ruby tools/build-programs.rb --generated  # Generate only C arrays
 ```

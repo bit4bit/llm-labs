@@ -10,6 +10,7 @@
 
 /* Include generated program binaries */
 #include "../../programs/generated/hello_bin.c"
+#include "../../programs/generated/selfcheck_bin.c"
 
 /* Add more program includes here as needed:
  * #include "../../programs/generated/shell_bin.c"

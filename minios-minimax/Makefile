@@ -47,15 +47,15 @@ help:
 
 # Build user programs
 programs:
-	$(MAKE) -C programs
+	ruby tools/build-programs.rb --programs
 
 # Generate C arrays from program binaries
 programs-generated:
-	$(MAKE) -C programs generated
+	ruby tools/build-programs.rb --generated
 
 # Clean program build artifacts
 programs-clean:
-	$(MAKE) -C programs clean
+	ruby tools/build-programs.rb --clean
 
 kernel.bin: $(KERNEL_OBJS) link.ld
 	$(LD) $(LDFLAGS) -o $@ $(KERNEL_OBJS)

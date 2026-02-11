@@ -1,4 +1,4 @@
-#include "../lib/syscall.h"
+#include "../../lib/syscall.h"
 
 void _start(void) {
     const char* msg = "Hello from C program!\n";
