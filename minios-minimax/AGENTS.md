@@ -8,6 +8,9 @@ This file provides guidelines for agents working with the MiniOS Minimax project
 For detailed documentation on user programs, see:
 - [programs/AGENTS.md](programs/AGENTS.md) - Complete guide for creating and compiling C user programs
 
+For detailed documentation on kernel development, see:
+- [src/kernel/AGENTS.md](src/kernel/AGENTS.md) - Kernel development guide (C18, assembly, memory management, syscalls)
+
 ## Quick Reference
 
 ### Build Commands
