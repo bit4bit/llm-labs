@@ -49,7 +49,11 @@ int sys_write(int fd, const char* buf, size_t count) {
     DEBUG_SYSCALL("fd=%u buf=0x%X count=%u", fd, (uint32_t)buf, count);
 
     vga_write(buf, count);
-    
+
+    for (int i = 0; i < count; i++) {
+      serial_putchar(buf[i]);
+    }
+
     DEBUG_SYSCALL("output=\"%.*s\"", count, buf);
     
     return (int)count;

@@ -31,6 +31,9 @@ help:
 	@echo "  make qemu-int     - Run with interrupt debugging only"
 	@echo "  make qemu-vga     - Run with graphical display (see VGA output)"
 	@echo ""
+	@echo "Testing:"
+	@echo " ci		   - To clean, build and run qemu-test"
+	@echo ""
 	@echo "Build artifacts:"
 	@echo "  make iso          - Create bootable ISO image"
 	@echo ""
@@ -115,6 +118,8 @@ iso: kernel.bin iso/boot/grub/grub.cfg
 	mkdir -p iso/boot/grub
 	cp kernel.bin iso/boot/
 	grub-mkrescue -o minios.iso iso 2>/dev/null || echo "Install grub-mkresuce for ISO generation"
+
+ci: clean all qemu-test
 
 qemu: iso
 	qemu-system-i386 -cdrom minios.iso -m 64 -nographic
