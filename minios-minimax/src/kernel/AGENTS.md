@@ -119,10 +119,21 @@ User Space:
 
 ## Testing
 
-Run QEMU tests after any kernel changes:
-```bash
-make qemu-simple
-```
+* `make clean`
+* `make all`
+* `make qemu-simple`
+
+## Testing full CPU debug (saves to qemu.log)
+
+* `make clean`
+* `make all`
+* `make qemu-debug`
+
+## Testing interrput debugging only
+
+* `make clean`
+* `make all`
+* `make qemu-int`
 
 Verify:
 1. Build completes without errors
