@@ -20,4 +20,4 @@ help:
 	@echo "  make generated    - Generate only C arrays"
 	@echo "  make clean        - Remove all build artifacts"
 	@echo ""
-	@echo "Note: This Makefile delegates to tools/build-programs.py"
+	@echo "Note: This Makefile delegates to tools/build-programs.rb"

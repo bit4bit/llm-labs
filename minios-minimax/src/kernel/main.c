@@ -70,7 +70,18 @@ void kernel_main(multiboot_info_t* mbd) {
     } else {
         DEBUG_ERROR("Test: FAILED - memory not working!");
     }
-    
+
+    pcb_t* selfcheck = process_create("selfcheck", USER_PROGRAM_BASE);
+    if (selfcheck == NULL) {
+        DEBUG_ERROR("Could not create selfcheck process");
+        while (1) __asm__ volatile ("hlt");
+    }
+    if (process_load(selfcheck, selfcheck_bin, selfcheck_bin_size) != 0) {
+        DEBUG_ERROR("Could not load selfcheck program");
+        while (1) __asm__ volatile ("hlt");
+    }
+    process_start(selfcheck);
+ 
     pcb_t* hello = process_create("hello", USER_PROGRAM_BASE);
     if (hello == NULL) {
         DEBUG_ERROR("Could not create hello process");
@@ -81,7 +92,7 @@ void kernel_main(multiboot_info_t* mbd) {
         DEBUG_ERROR("Could not load hello program");
         while (1) __asm__ volatile ("hlt");
     }
-
+ 
     DEBUG_INFO("About to call process_start...");
     process_start(hello);
 

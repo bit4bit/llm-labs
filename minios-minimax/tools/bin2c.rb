@@ -30,8 +30,6 @@ def bin2c(input_file, array_name)
   puts '};'
   puts
   puts "uint32_t #{array_name}_size = sizeof(#{array_name});"
-
-  warn "Generated C array '#{array_name}' with #{file_size} bytes"
 end
 
 if ARGV.size != 2

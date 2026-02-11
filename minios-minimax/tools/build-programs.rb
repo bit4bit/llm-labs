@@ -82,7 +82,7 @@ def generate_c_array(prog)
 
   puts "[GEN] #{prog}_bin.c"
 
-  cmd = "python3 #{File.join(SCRIPT_DIR, 'bin2c.py')} #{bin_file} #{prog}"
+  cmd = "ruby #{File.join(SCRIPT_DIR, 'bin2c.rb')} #{bin_file} #{prog}_bin"
   result = `#{cmd} 2>&1`
   unless $?.success?
     puts "  ERROR: #{result}"
