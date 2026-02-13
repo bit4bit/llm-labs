@@ -6,6 +6,16 @@
 
 #define COM1_PORT 0x3F8
 
+static inline uint8_t inb(uint16_t port) {
+    uint8_t val;
+    __asm__ volatile ("inb %1, %0" : "=a"(val) : "Nd"(port));
+    return val;
+}
+
+static inline void outb(uint16_t port, uint8_t val) {
+    __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
+}
+
 void serial_putchar(char c);
 void serial_print(const char* str);
 void serial_print_uint(uint32_t val);

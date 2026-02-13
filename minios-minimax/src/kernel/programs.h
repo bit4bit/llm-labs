@@ -18,7 +18,6 @@ extern uint32_t hello_bin_size;
 extern uint8_t selfcheck_bin[];
 extern uint32_t selfcheck_bin_size;
 
-
 /* Add more programs here as needed:
  * extern uint8_t shell_bin[];
  * extern uint32_t shell_bin_size;

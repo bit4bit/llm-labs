@@ -114,6 +114,9 @@ src/kernel/process/process.o: src/kernel/process/process.c src/kernel/process/pr
 src/kernel/process/trampoline.o: src/kernel/process/trampoline.S
 	$(AS) $(ASFLAGS) -o $@ $<
 
+src/kernel/process/scheduler_test.o: src/kernel/process/scheduler_test.c src/kernel/process/process.h src/kernel/cpu/interrupts.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 iso: kernel.bin iso/boot/grub/grub.cfg
 	mkdir -p iso/boot/grub
 	cp kernel.bin iso/boot/

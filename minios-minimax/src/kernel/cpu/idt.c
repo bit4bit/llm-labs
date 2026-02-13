@@ -22,6 +22,7 @@ void idt_set_gate(uint8_t num, uint32_t handler) {
 extern void handle_page_fault(void);
 extern void handle_general_protection_fault(void);
 extern void syscall_entry(void);
+extern void timer_handler_asm(void);
 
 void idt_init(void) {
     serial_print("IDT: Initializing...\n");
@@ -35,6 +36,8 @@ void idt_init(void) {
 
     idt_set_gate(13, (uint32_t)handle_general_protection_fault);
     idt_set_gate(14, (uint32_t)handle_page_fault);
+
+    idt_set_gate(32, (uint32_t)timer_handler_asm);
 
     serial_print("IDT: Configuring syscall gate at 0x80...\n");
     idt_entries[0x80].offset_low = ((uint32_t)syscall_entry) & 0xFFFF;

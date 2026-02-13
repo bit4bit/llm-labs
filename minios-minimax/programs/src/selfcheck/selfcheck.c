@@ -1,14 +1,9 @@
 #include "../../lib/syscall.h"
 
 void _start(void) {
-    const char* msg = "[SELFCHECK] MiniOS user-mode self-check passed!\n";
-
-    uint32_t len = 0;
-    while (msg[len]) {
-        len++;
+    volatile int counter = 0;
+    for (int i = 0; i < 100000000; i++) {
+        counter++;
     }
-
-    write(1, msg, len);
-
     exit(0);
 }

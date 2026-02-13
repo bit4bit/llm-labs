@@ -1,6 +1,5 @@
 .text
 .global syscall_entry
-.global process_exit_return
 
 syscall_entry:
     # Save all registers first
@@ -15,28 +14,20 @@ syscall_entry:
     mov %edi, %ds
     mov %edi, %es
 
-    # Push syscall arguments onto stack (right-to-left for cdecl)
-    # Stack layout after pushal + 4 segment pushes:
-    # ESP+0:  gs (just pushed)
-    # ESP+4:  fs
-    # ESP+8:  es
-    # ESP+12: ds
-    # ESP+16: EDI (pushal starts here)
-    # ESP+20: ESI
-    # ESP+24: EBP
-    # ESP+28: ESP (original)
-    # ESP+32: EBX
-    # ESP+36: EDX
-    # ESP+40: ECX
-    # ESP+44: EAX
+    # Get syscall number (eax) from original registers (saved in pushal area)
+    mov 44(%esp), %eax  # Original EAX = syscall number
+    
+    # Check if this is the exit syscall BEFORE calling the handler
+    cmpl $1, %eax       # SYSCALL_EXIT = 1
+    je syscall_exit_to_kernel
 
-    # Get saved registers from pushal area (add 16 for segment pushes)
-    mov 44(%esp), %eax  # Original EAX
+    # For non-exit syscalls, continue with normal handler call
+    # Get remaining syscall arguments from original registers
     mov 32(%esp), %ebx  # Original EBX
     mov 40(%esp), %ecx  # Original ECX
     mov 36(%esp), %edx  # Original EDX
 
-    # Push in reverse order for cdecl calling convention
+    # Push arguments in reverse order for cdecl calling convention
     push %edx           # arg4: edx
     push %ecx           # arg3: ecx
     push %ebx           # arg2: ebx
@@ -48,12 +39,7 @@ syscall_entry:
     # Clean up arguments (4 * 4 = 16 bytes)
     add $16, %esp
 
-    # Check if this is an exit syscall (return to kernel mode)
-    cmpl $1, 44(%esp)
-    je .Lexit_to_kernel
-
     # Store return value back to saved EAX on stack
-    # After cleaning args, EAX is at offset 44 again
     mov %eax, 44(%esp)
 
     # Restore segment registers
@@ -68,45 +54,40 @@ syscall_entry:
     # Return to user mode
     iret
 
-.Lexit_to_kernel:
-    # For exit syscalls, return to kernel mode via iret
-    # Stack after popal: [eflags][cs][eip]
-
-    # Store return value (exit code) in saved EAX
-    mov %eax, 44(%esp)
-
-    # Disable interrupts during transition
+syscall_exit_to_kernel:
+    # For exit syscall, we don't call syscall_handler at all
+    # Instead we extract the exit code and go directly to kernel mode
+    # Get exit code from original EBX register
+    mov 32(%esp), %ebx  # Original EBX = exit code
+    
+    # Disable interrupts
     cli
 
-    # Pop saved registers
+    # Pop saved segment registers
     pop %gs
     pop %fs
     pop %es
     pop %ds
-    popal
-
-    # At this point, ESP points to saved EFLAGS
-    # Build iret frame on current stack (push in reverse order of pop)
-    # Pop order: EIP, CS, EFLAGS, ESP, SS
-    # Push order: SS, ESP, EFLAGS, CS, EIP
-
-    # Push SS
-    push $0x10
-
-    # Push ESP (kernel stack)
-    push $0xBFFFF000
-
-    # Push EFLAGS (with IF=0 to disable interrupts)
-    pushf
+    
+    # Pop general purpose registers except EAX (save exit code for later)
+    pop %edi
+    pop %esi
+    pop %ebp
+    pop %edx            # Note ESP is skipped but we're about to do iret anyway
+    pop %ebx
+    pop %ecx
+    # eax is already in ebx (exit code)
+    
+    # Build IRET frame to kernel mode:
+    # SS (0x10), ESP (kernel), EFLAGS, CS (0x08), EIP (process_exit_return)
+    push $0x10              # SS (kernel data segment)
+    push $0xBFFFF000        # ESP (kernel stack)
+    pushf                   # EFLAGS
     pop %eax
-    and $0xFFFFFDFF, %eax
-    push %eax
-
-    # Push CS (kernel code selector)
-    push $0x08
-
-    # Push EIP (process_exit_return)
-    push $process_exit_return
-
-    # Now do iret - will pop EIP, CS, EFLAGS, ESP, SS
+    and $0xFFFFFDFF, %eax   # Clear IF bit (disable interrupts in kernel mode)
+    push %eax               # EFLAGS with IF cleared
+    push $0x08              # CS (kernel code segment)
+    push $process_exit_return  # EIP (where to go in kernel)
+    
+    # Return to kernel mode
     iret

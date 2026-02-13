@@ -6,6 +6,21 @@
 /* Syscall numbers - must match kernel definitions */
 #define SYS_EXIT  1
 #define SYS_WRITE 3
+#define SYS_GET_TICK_COUNT 101
+
+/* 
+ * get_tick_count - get the current PIT tick count
+ * Returns: number of timer ticks since boot
+ */
+static inline uint32_t get_tick_count(void) {
+    uint32_t ret;
+    __asm__ volatile(
+        "int $0x80"
+        : "=a"(ret)
+        : "a"(SYS_GET_TICK_COUNT)
+    );
+    return ret;
+}
 
 /* 
  * exit - terminate the current process

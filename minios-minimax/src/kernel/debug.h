@@ -15,5 +15,8 @@ void debug_print(const char* fmt, ...);
 #define DEBUG_PROC(fmt, ...)     debug_print("[PROC]  " fmt "\n", ##__VA_ARGS__)
 #define DEBUG_SYSCALL(fmt, ...)  debug_print("[SYSCALL]" fmt "\n", ##__VA_ARGS__)
 #define DEBUG_EXCEPT(fmt, ...)   debug_print("[EXCEPT]" fmt "\n", ##__VA_ARGS__)
+#define DEBUG_PIT(fmt, ...)      debug_print("[PIT]   " fmt "\n", ##__VA_ARGS__)
+#define DEBUG_TIMER(fmt, ...)    debug_print("[TIMER] " fmt "\n", ##__VA_ARGS__)
+#define DEBUG_SCHED(fmt, ...)    debug_print("[SCHED] " fmt "\n", ##__VA_ARGS__)
 
 #endif

@@ -1,5 +1,6 @@
 .text
 .global enter_user_mode
+.global scheduler_switch
 
 # enter_user_mode(uint32_t entry_point, uint32_t user_stack)
 # This function switches from kernel mode (CPL=0) to user mode (CPL=3)
@@ -29,19 +30,19 @@ enter_user_mode:
     pushl $0x23                 # SS: user data selector (0x20 | RPL=3)
     pushl %ebx                  # ESP: user stack pointer
 
-    # Push EFLAGS without IF flag (keep interrupts disabled)
+    # Push EFLAGS with IF flag set (enable interrupts in user mode)
     pushf
     pop %ecx
-    and $0xFFFFFDFF, %ecx       # Clear IF flag (keep interrupts disabled)
+    or $0x200, %ecx             # Set IF flag to enable interrupts
     pushl %ecx                  # EFLAGS
 
     pushl $0x1B                 # CS: user code selector (0x18 | RPL=3)
     pushl %eax                  # EIP: entry point
 
     # Execute iret to jump to user mode
-    # This will:
-    # 1. Pop EIP, CS, EFLAGS, ESP, SS
-    # 2. Switch to CPL=3 (user mode)
-    # 3. Enable interrupts
-    # 4. Start executing at entry_point with user_stack
     iret
+
+# scheduler_switch(pcb_t* next)
+# Stub for now - will implement later if needed
+scheduler_switch:
+    ret
