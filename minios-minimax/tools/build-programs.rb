@@ -44,12 +44,17 @@ def find_programs
   programs.sort
 end
 
-def build_program(prog)
+# Per-process base address: 0x40000000 + index * 4MB
+USER_BASE = 0x40000000
+PAGE_4MB = 0x00400000
+
+def build_program(prog, index = 0)
   src_file = File.join(SRC_DIR, prog, "#{prog}.c")
   obj_file = File.join(SRC_DIR, prog, "#{prog}.o")
   bin_file = File.join(SRC_DIR, prog, "#{prog}.bin")
 
-  puts "[BUILD] #{prog}/#{prog}.c -> #{prog}/#{prog}.bin"
+  user_base = USER_BASE + index * PAGE_4MB
+  puts format("[BUILD] #{prog}/#{prog}.c -> #{prog}/#{prog}.bin (base=0x%X, idx=%d)", user_base, index)
 
   unless File.file?(src_file)
     puts "  ERROR: #{src_file} not found"
@@ -65,7 +70,8 @@ def build_program(prog)
     return false
   end
 
-  cmd_link = "ld #{LDFLAGS} -o #{bin_file} #{obj_file}"
+  defsym = '--defsym=_user_base=0x%X' % user_base
+  cmd_link = "ld #{LDFLAGS} #{defsym} -o #{bin_file} #{obj_file}"
   result = `#{cmd_link} 2>&1`
   unless $?.success?
     puts "  LINK ERROR: #{result}"
@@ -140,8 +146,8 @@ def main
   FileUtils.mkdir_p(GENERATED_DIR)
 
   if do_programs
-    programs.each do |prog|
-      exit 1 unless build_program(prog)
+    programs.each_with_index do |prog, idx|
+      exit 1 unless build_program(prog, idx)
     end
   end
 

@@ -16,6 +16,8 @@
 extern process_table_t process_table;
 extern volatile int all_processes_exited;
 
+void process_exit_return(void);
+
 void kernel_main(multiboot_info_t* mbd) {
     volatile uint16_t* vga = (volatile uint16_t*)VGA_MEMORY;
     const char* message = "MinOS Loaded";
@@ -44,58 +46,54 @@ void kernel_main(multiboot_info_t* mbd) {
 
     DEBUG_INFO("MinOS Loaded");
 
-    void* test_frame = pmm_alloc_frame();
-    DEBUG_INFO("Allocated test frame at: 0x%X", (uint32_t)test_frame);
-
-    pmm_free_frame(test_frame);
-    DEBUG_INFO("Freed test frame");
-
-    DEBUG_INFO("Free frames after: %u", pmm_get_free_count());
-
     tss_init();
     process_init();
 
-    DEBUG_INFO("Testing memory at user program base...");
-    volatile uint32_t* test_ptr = (volatile uint32_t*)USER_PROGRAM_BASE;
+    /* ---- Create processes ----
+     * Order must match alphabetical order used by build-programs.rb
+     * so that each binary's link address matches its process index:
+     *   index 0 = hello     -> 0x40000000
+     *   index 1 = selfcheck -> 0x40400000
+     */
 
-    DEBUG_INFO("Test: Reading initial value...");
-    uint32_t initial_val = *test_ptr;
-    DEBUG_INFO("Test: Initial value = 0x%X", initial_val);
-
-    DEBUG_INFO("Test: Writing 0xDEADBEEF...");
-    *test_ptr = 0xDEADBEEF;
-
-    DEBUG_INFO("Test: Reading back...");
-    uint32_t read_val = *test_ptr;
-    DEBUG_INFO("Test: Read value = 0x%X", read_val);
-
-    if (read_val == 0xDEADBEEF) {
-        DEBUG_INFO("Test: Write/read OK!");
-    } else {
-        DEBUG_ERROR("Test: FAILED - memory not working!");
+    DEBUG_INFO("[BOOT] Creating hello process...");
+    pcb_t* p0 = process_create("hello", 0);
+    if (!p0) {
+        DEBUG_ERROR("[BOOT] FAILED: Could not create hello process");
+        while (1) __asm__ volatile ("hlt");
+    }
+    if (process_load(p0, hello_bin, hello_bin_size) != 0) {
+        DEBUG_ERROR("[BOOT] FAILED: Could not load hello program");
+        while (1) __asm__ volatile ("hlt");
     }
 
-    DEBUG_INFO("[SELFCHECK] Starting scheduler self-check...");
-
-    pcb_t* p1 = process_create("selfcheck", USER_PROGRAM_BASE);
+    DEBUG_INFO("[BOOT] Creating selfcheck process...");
+    pcb_t* p1 = process_create("selfcheck", 0);
     if (!p1) {
-        DEBUG_ERROR("[SELFCHECK] FAILED: Could not create process");
+        DEBUG_ERROR("[BOOT] FAILED: Could not create selfcheck process");
         while (1) __asm__ volatile ("hlt");
     }
-
     if (process_load(p1, selfcheck_bin, selfcheck_bin_size) != 0) {
-        DEBUG_ERROR("[SELFCHECK] FAILED: Could not load program");
+        DEBUG_ERROR("[BOOT] FAILED: Could not load selfcheck program");
         while (1) __asm__ volatile ("hlt");
     }
 
-    uint32_t run_count_before = p1->run_count;
-    (void)run_count_before;
+    DEBUG_INFO("[BOOT] %u processes created, enabling interrupts...", process_table.count);
 
-    DEBUG_INFO("[SELFCHECK] Running test (PID %u)...", p1->id);
-    process_start(p1);
+    /* Enable interrupts and enter idle loop.
+     * The scheduler will pick the first READY process on the first
+     * timer tick (current_process == NULL at that point). */
+    __asm__ volatile ("sti");
 
-    // Should never reach here if process_start works correctly
-    while (1) __asm__ volatile ("hlt");
+    while (1) {
+        if (all_processes_exited) {
+            break;
+        }
+        __asm__ volatile ("hlt");
+    }
+
+    /* All processes have exited — run the self-check report */
+    process_exit_return();
 }
 
 void process_exit_return(void) {
@@ -104,6 +102,8 @@ void process_exit_return(void) {
 
     for (uint32_t i = 0; i < process_table.count; i++) {
         pcb_t* p = &process_table.processes[i];
+        DEBUG_INFO("[SELFCHECK] Process %s (PID %u): state=%u run_count=%u",
+                   p->name, p->id, p->state, p->run_count);
         if (p->state == PROC_EXITED) {
             exited_count++;
         }
@@ -111,10 +111,14 @@ void process_exit_return(void) {
     }
 
     DEBUG_INFO("[SELFCHECK] Test completed");
-    DEBUG_INFO("[SELFCHECK] Run count: %u", total_runs);
+    DEBUG_INFO("[SELFCHECK] Exited: %u/%u, total run_count: %u",
+               exited_count, process_table.count, total_runs);
 
-    if (total_runs >= 2) {
+    if (exited_count == process_table.count && total_runs >= 2) {
         DEBUG_INFO("[SELFCHECK] PASSED: Scheduler working correctly");
+    } else if (exited_count != process_table.count) {
+        DEBUG_ERROR("[SELFCHECK] FAILED: Not all processes exited (%u/%u)",
+                    exited_count, process_table.count);
     } else {
         DEBUG_ERROR("[SELFCHECK] FAILED: Expected >= 2 context switches, got %u", total_runs);
     }

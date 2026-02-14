@@ -1,6 +1,7 @@
 #include "syscall.h"
 #include "../process/process.h"
 #include "../kernel.h"
+#include "../minios.h"
 #include "../debug.h"
 #include "../cpu/interrupts.h"
 
@@ -8,9 +9,6 @@
 #define SYSCALL_WRITE 3
 #define SYSCALL_GETPID 100
 #define SYSCALL_GET_TICK_COUNT 101
-
-#define USER_PROGRAM_BASE 0x40000000
-#define USER_PROGRAM_SIZE 0x00100000
 
 static int validate_user_pointer(const void* ptr, size_t len) {
     uint32_t addr = (uint32_t)ptr;
@@ -20,6 +18,11 @@ static int validate_user_pointer(const void* ptr, size_t len) {
     }
 
     if (addr + len < addr) {
+        return 0;
+    }
+
+    /* Reject pointers in kernel space */
+    if (addr >= KERNEL_VIRTUAL_BASE || addr + len > KERNEL_VIRTUAL_BASE) {
         return 0;
     }
 
@@ -55,15 +58,6 @@ int sys_write(int fd, const char* buf, size_t count) {
 }
 
 extern void scheduler(void);
-
-void syscall_exit_handler(int32_t exit_code) {
-    pcb_t* pcb = process_get_current();
-    if (pcb) {
-        DEBUG_SYSCALL("exit called by %s with code %d", pcb->name, exit_code);
-        pcb->state = PROC_EXITED;
-    }
-    scheduler();
-}
 
 int syscall_handler(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     int32_t result = 0;

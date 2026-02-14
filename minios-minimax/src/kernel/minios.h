@@ -51,26 +51,23 @@
  * VIRTUAL MEMORY LAYOUT - USER SPACE
  * ============================================================================ */
 
-/** User Program Load Address (1GB virtual) */
+/** User Program Load Address (1GB virtual, base for process 0) */
 #define USER_PROGRAM_BASE       0x40000000
 
-/** User Program Physical Address (16MB physical) */
-#define USER_PROGRAM_PHYS       0x01000000
+/** Per-process code virtual address: 0x40000000 + i * 4MB */
+#define USER_CODE_VADDR(i)      (USER_PROGRAM_BASE + (i) * PAGE_SIZE_4MB)
 
-/** User Stack Region Virtual Base (3GB - 4MB) */
-#define USER_STACK_REGION_BASE  0xBFC00000
+/** Per-process code PDE index: 256 + i */
+#define USER_CODE_PDE(i)        (PDE_USER_PROGRAM + (i))
 
-/** User Stack Region Physical Address (32MB physical) */
-#define USER_STACK_REGION_PHYS  0x02000000
+/** Per-process stack PDE index: 767 - i */
+#define USER_STACK_PDE(i)       (PDE_USER_STACK - (i))
 
-/** User Stack Top (grows downward from here) */
-#define USER_STACK_TOP          0xBFFFF000
+/** Per-process stack virtual address base */
+#define USER_STACK_VADDR(i)     (PDE_INDEX_TO_VADDR(USER_STACK_PDE(i)))
 
-/** User Stack Pointer (initial SP, with 4KB guard) */
-#define USER_STACK_INITIAL      (USER_STACK_TOP - PAGE_SIZE_4KB)
-
-/** Kernel Stack for User Process (TSS ESP0) */
-#define KERNEL_STACK_USER_MODE  USER_STACK_TOP
+/** Per-process user stack initial pointer (top of 4MB region minus 4KB guard) */
+#define USER_STACK_INITIAL(i)   (USER_STACK_VADDR(i) + PAGE_SIZE_4MB - PAGE_SIZE_4KB)
 
 /* ============================================================================
  * PAGE DIRECTORY ENTRY INDICES
@@ -128,18 +125,8 @@
 #define PHYS_KERNEL_START       0x00400000
 #define PHYS_KERNEL_END         0x0FFFFFFF
 
-/** Physical Memory Region: User Program (16MB) */
-#define PHYS_USER_PROGRAM       USER_PROGRAM_PHYS
-
-/** Physical Memory Region: User Stack (32MB) */
-#define PHYS_USER_STACK         USER_STACK_REGION_PHYS
-
-/* ============================================================================
- * LEGACY/COMPATIBILITY ALIASES
- * ============================================================================ */
-
-/** Legacy alias for user program address */
-#define HELLO_ADDR              USER_PROGRAM_BASE
+/* (User program and stack physical frames are now allocated dynamically
+   per-process via pmm_alloc_frame() in process_create()) */
 
 /* ============================================================================
  * UTILITY MACROS

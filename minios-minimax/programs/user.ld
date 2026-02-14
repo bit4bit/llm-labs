@@ -4,7 +4,9 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x40000000;  /* User program base address */
+    /* Per-process base address: set via --defsym=_user_base=<addr>
+     * Defaults to 0x40000000 (process 0) if not defined. */
+    . = DEFINED(_user_base) ? _user_base : 0x40000000;
 
     .text : {
         *(.text.startup)

@@ -78,61 +78,9 @@ void timer_handler(void) {
     pit_ticks++;
 
     pcb_t* pcb = process_get_current();
-    if (pcb == NULL) {
-        return;
+    if (pcb != (void*)0) {
+        pcb->run_count++;
     }
-
-    __asm__ volatile (
-        "mov %%esp, %0\n"
-        : "=r"(pcb->esp)
-    );
-    __asm__ volatile (
-        "mov %%ebp, %0\n"
-        : "=r"(pcb->ebp)
-    );
-    __asm__ volatile (
-        "mov %%eax, %0\n"
-        : "=r"(pcb->eax)
-    );
-    __asm__ volatile (
-        "mov %%ecx, %0\n"
-        : "=r"(pcb->ecx)
-    );
-    __asm__ volatile (
-        "mov %%edx, %0\n"
-        : "=r"(pcb->edx)
-    );
-    __asm__ volatile (
-        "mov %%ebx, %0\n"
-        : "=r"(pcb->ebx)
-    );
-    __asm__ volatile (
-        "mov %%esi, %0\n"
-        : "=r"(pcb->esi)
-    );
-    __asm__ volatile (
-        "mov %%edi, %0\n"
-        : "=r"(pcb->edi)
-    );
-
-    __asm__ volatile (
-        "mov %%ds, %0\n"
-        : "=r"(pcb->ds)
-    );
-    __asm__ volatile (
-        "mov %%es, %0\n"
-        : "=r"(pcb->es)
-    );
-    __asm__ volatile (
-        "mov %%fs, %0\n"
-        : "=r"(pcb->fs)
-    );
-    __asm__ volatile (
-        "mov %%gs, %0\n"
-        : "=r"(pcb->gs)
-    );
-
-    pcb->run_count++;
 
     scheduler();
 }
