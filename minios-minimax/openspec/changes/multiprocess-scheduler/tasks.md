@@ -39,8 +39,14 @@
 
 ## 8. Kernel Main and Integration
 
-- [x] 8.1 Update `kernel_main()` in `main.c`: create multiple processes (e.g., selfcheck + hello), load each with its binary, then call `process_start()` on the first one.
-- [x] 8.2 Update `vmm_init()` to remove the single user code/stack PDE allocation (now done per-process in `process_create()`).
+- [ ] 8.1 Update `kernel_main()` in `main.c`:
+  - Create multiple processes (e.g., selfcheck + hello) using `process_create()`
+  - Load each with its binary using `process_load()`
+  - Enable interrupts with `pit_init()` (already done)
+  - Enter main loop (infinite loop with `hlt` or similar)
+  - **Remove call to `process_start()`** - the scheduler handles first launch via fake interrupt frame
+- [ ] 8.2 Remove `process_start()` function from `process.c` and `process.h`
+- [ ] 8.3 Update `vmm_init()` to remove the single user code/stack PDE allocation (now done per-process in `process_create()`).
 
 ## 9. Testing
 

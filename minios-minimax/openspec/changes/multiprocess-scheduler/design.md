@@ -154,6 +154,19 @@ typedef struct {
 
 Los campos `eip`, `esp`, `ebp`, `eax-edi`, `ds-gs` se eliminan porque el estado vive en el kernel stack, no en el PCB.
 
+### D8: Eliminacion de process_start()
+
+**Decision**: eliminar la funcion `process_start()`. El scheduler maneja el primer arranque de procesos de la misma manera que los reanuda: via el fake interrupt frame creado en `process_create()`.
+
+**Flujo actualizado en `kernel_main()`**:
+1. `process_create()` - crea el PCB y prepara el fake interrupt frame en el kernel stack
+2. `process_load()` - carga el binario en la direccion virtual del proceso
+3. Repetir para mas procesos
+4. `pit_init()` - habilita el timer (inicia las interrupciones)
+5. Bucle principal (`while(1) hlt`) - el scheduler corre en cada tick del timer
+
+**Razon**: el fake interrupt frame asegura que cuando el scheduler se ejecuta (despues del primer tick del timer), puede hacer switch a cualquier proceso de la misma manera que lo reanuda. No se necesita un camino especial para el primer arranque.
+
 ## Risks / Trade-offs
 
 **[Sin aislamiento de memoria]** → Aceptado. Todos los procesos ven la memoria de los demas. Un proceso malicioso podria corromper otro. Mitigation: no es objetivo para esta fase.
