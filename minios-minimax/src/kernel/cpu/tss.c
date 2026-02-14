@@ -19,7 +19,9 @@ void tss_init(void) {
     serial_print("\n");
 
     tss_entry.ss0 = KERNEL_DATA_SELECTOR;
-    tss_entry.esp0 = KERNEL_STACK_USER_MODE;
+    /* esp0 will be set per-process by scheduler before any user-to-kernel
+     * transition.  Initialise to 0 as a safe sentinel. */
+    tss_entry.esp0 = 0;
     tss_entry.cr3 = 0;
     tss_entry.eip = 0;
     tss_entry.eflags = 0;
